@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: var(--theme-surface);
+  --color-surface-light: var(--theme-surface-light);
+  --color-surface-lighter: var(--theme-surface-lighter);
+  --color-accent: var(--theme-accent);
+  --color-accent-light: var(--theme-accent-light);
+  --color-text-primary: var(--theme-text-primary);
+  --color-text-secondary: var(--theme-text-secondary);
+  --color-text-muted: var(--theme-text-muted);
+  --color-positive: var(--theme-positive);
+  --color-negative: var(--theme-negative);
+}
+
+:root {
+  --theme-surface: #f8fafc;
+  --theme-surface-light: #ffffff;
+  --theme-surface-lighter: #e2e8f0;
+  --theme-accent: #6366f1;
+  --theme-accent-light: #4f46e5;
+  --theme-text-primary: #0f172a;
+  --theme-text-secondary: #475569;
+  --theme-text-muted: #94a3b8;
+  --theme-positive: #16a34a;
+  --theme-negative: #dc2626;
+}
+
+:root.dark {
+  --theme-surface: #0f172a;
+  --theme-surface-light: #1e293b;
+  --theme-surface-lighter: #334155;
+  --theme-accent: #6366f1;
+  --theme-accent-light: #818cf8;
+  --theme-text-primary: #f1f5f9;
+  --theme-text-secondary: #94a3b8;
+  --theme-text-muted: #64748b;
+  --theme-positive: #22c55e;
+  --theme-negative: #ef4444;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+}

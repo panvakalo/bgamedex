@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.db
+*.db-shm
+*.db-wal
+.env
+
+# Stale tsc output — Vite compiles TS directly
+frontend/src/**/*.js
+frontend/src/**/*.vue.js
