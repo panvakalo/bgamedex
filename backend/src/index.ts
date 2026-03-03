@@ -38,6 +38,7 @@ app.use(helmet({
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'"],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      styleSrcAttr: ["'unsafe-inline'"],
       frameAncestors: ["'none'"],
     },
   },
