@@ -33,11 +33,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       frameAncestors: ["'none'"],
     },
   },
@@ -132,6 +132,9 @@ app.get('*', (_req, res, next) => {
 
 if (!process.env.RESEND_API_KEY) {
   console.warn('WARNING: RESEND_API_KEY not set — verification emails will not be sent')
+}
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('WARNING: OPENAI_API_KEY not set — rules chat will not be available')
 }
 
 app.listen(Number(PORT), '0.0.0.0', () => {
