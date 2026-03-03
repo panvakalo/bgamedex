@@ -102,7 +102,7 @@ onMounted(() => {
       <GameFilters v-model="filters" :has-active-filters="hasActiveFilters" :tags="tags" @clear="clearFilters">
         <template #actions>
           <button
-            class="flex-shrink-0 h-9 flex items-center gap-1.5 px-3 rounded-lg border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium transition-colors"
+            class="flex-shrink-0 h-9 flex items-center gap-1.5 px-3 rounded-xl border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
             title="Add game"
             @click="showAddModal = true"
           >
@@ -123,7 +123,7 @@ onMounted(() => {
 
     <!-- Quick Log Play FAB -->
     <button
-      class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-positive hover:bg-positive/80 text-white shadow-lg shadow-positive/30 flex items-center justify-center transition-colors"
+      class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-positive hover:bg-positive/80 text-white shadow-lg shadow-positive/30 hover:shadow-xl hover:shadow-positive/40 flex items-center justify-center active:scale-95 transition-all"
       title="Quick log play"
       @click="openFabModal"
     >
@@ -136,8 +136,8 @@ onMounted(() => {
     <!-- Quick Log Play Modal -->
     <Teleport to="body">
       <div v-if="showFabModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60" @click="showFabModal = false" />
-        <div class="relative bg-surface rounded-xl shadow-2xl border border-surface-lighter p-6 w-full max-w-md">
+        <div class="absolute inset-0 bg-black/60 animate-backdrop-in" @click="showFabModal = false" />
+        <div class="relative bg-surface rounded-2xl border border-surface-lighter p-6 w-full max-w-md animate-modal-in" style="box-shadow: var(--shadow-modal)">
           <h3 class="text-lg font-semibold text-text-primary mb-4">Log a Play</h3>
 
           <!-- Step 1: Pick a game -->
@@ -192,7 +192,7 @@ onMounted(() => {
               </button>
               <button
                 :disabled="fabLogging"
-                class="px-4 py-2 rounded-lg text-sm font-medium bg-positive text-white hover:bg-positive/80 transition-colors disabled:opacity-50"
+                class="px-4 py-2 rounded-xl text-sm font-medium bg-positive text-white hover:bg-positive/80 active:scale-[0.97] transition-all disabled:opacity-50"
                 @click="handleFabLog"
               >
                 {{ fabLogging ? 'Logging...' : 'Log Play' }}

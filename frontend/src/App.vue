@@ -89,7 +89,7 @@ function isActive(item: typeof navItems[number]): boolean {
     >
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center justify-center h-16 hover:opacity-80 transition-opacity">
-        <img :src="logoUrl" alt="Bgamedex" class="max-h-10 max-w-12 object-contain mix-blend-multiply dark:mix-blend-screen" />
+        <img :src="logoUrl" alt="Bgamedex" class="max-h-10 max-w-12 object-contain drop-shadow-sm" />
       </RouterLink>
 
       <!-- Nav items -->
@@ -107,7 +107,7 @@ function isActive(item: typeof navItems[number]): boolean {
             <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
           </svg>
           <!-- Tooltip -->
-          <span class="absolute left-full ml-2 px-2 py-1 rounded-md bg-surface-lighter text-text-primary text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+          <span class="absolute left-full ml-2 px-2 py-1 rounded-md bg-surface-lighter text-text-primary text-xs whitespace-nowrap opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none transition-all duration-150">
             {{ item.label }}
           </span>
         </RouterLink>
@@ -151,7 +151,7 @@ function isActive(item: typeof navItems[number]): boolean {
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          <span class="absolute left-full ml-2 px-2 py-1 rounded-md bg-surface-lighter text-text-primary text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+          <span class="absolute left-full ml-2 px-2 py-1 rounded-md bg-surface-lighter text-text-primary text-xs whitespace-nowrap opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none transition-all duration-150">
             Sign out
           </span>
         </button>
@@ -165,7 +165,7 @@ function isActive(item: typeof navItems[number]): boolean {
     >
       <div class="flex items-center justify-between px-4 py-3">
         <RouterLink to="/" class="flex items-center gap-2">
-          <img :src="logoUrl" alt="Bgamedex" class="h-8 mix-blend-multiply dark:mix-blend-screen" />
+          <img :src="logoUrl" alt="Bgamedex" class="h-8 drop-shadow-sm" />
           <span class="text-xl font-bold text-text-primary tracking-tight"><span class="text-accent-light">Bgame</span>dex</span>
         </RouterLink>
         <button

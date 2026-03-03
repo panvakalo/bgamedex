@@ -51,11 +51,11 @@ onMounted(fetchStats)
     <div v-else-if="stats">
       <!-- Summary cards -->
       <div class="grid grid-cols-2 gap-4 mb-10">
-        <div class="bg-surface rounded-xl border border-surface-lighter p-6 text-center">
+        <div class="bg-surface rounded-xl border border-surface-lighter p-6 text-center" style="box-shadow: var(--shadow-card)">
           <p class="text-4xl font-bold text-accent-light">{{ stats.totalPlays }}</p>
           <p class="text-sm text-text-secondary mt-1">Total Plays</p>
         </div>
-        <div class="bg-surface rounded-xl border border-surface-lighter p-6 text-center">
+        <div class="bg-surface rounded-xl border border-surface-lighter p-6 text-center" style="box-shadow: var(--shadow-card)">
           <p class="text-4xl font-bold text-accent-light">{{ stats.gamesPlayed }}</p>
           <p class="text-sm text-text-secondary mt-1">Games Played</p>
         </div>
@@ -77,6 +77,7 @@ onMounted(fetchStats)
               :key="item.gameId"
               :to="`/games/${item.gameId}`"
               class="flex items-center gap-4 p-3 rounded-xl bg-surface border border-surface-lighter hover:border-accent/30 transition-colors"
+              style="box-shadow: var(--shadow-card)"
             >
               <span class="text-lg font-bold text-text-muted w-8 text-center">{{ i + 1 }}</span>
               <img
@@ -100,6 +101,7 @@ onMounted(fetchStats)
               v-for="play in stats.recentPlays"
               :key="play.id"
               class="flex items-center gap-4 p-3 rounded-xl bg-surface border border-surface-lighter"
+              style="box-shadow: var(--shadow-card)"
             >
               <RouterLink :to="`/games/${play.gameId}`" class="flex items-center gap-4 flex-1 min-w-0 hover:opacity-80 transition-opacity">
                 <img

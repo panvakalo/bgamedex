@@ -101,7 +101,7 @@ async function handleSubmit() {
   <main class="flex items-center justify-center min-h-[calc(100vh-73px)]">
     <div class="w-full max-w-sm mx-4">
       <div class="text-center mb-8">
-        <img :src="logoUrl" alt="Bgamedex" class="h-32 mx-auto mb-3 mix-blend-multiply dark:mix-blend-screen" />
+        <img :src="logoUrl" alt="Bgamedex" class="h-32 mx-auto mb-3 drop-shadow-sm" />
         <h1 class="text-4xl font-bold text-text-primary mb-2">
           <span class="text-accent-light">Bgame</span>dex
         </h1>
@@ -129,13 +129,13 @@ async function handleSubmit() {
               type="email"
               placeholder="Email"
               required
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <button
             type="submit"
             :disabled="forgotLoading"
-            class="w-full py-3 rounded-lg bg-accent hover:bg-accent-light text-white font-medium transition-colors disabled:opacity-50"
+            class="w-full py-3 rounded-xl bg-accent hover:bg-accent-light text-white font-medium active:scale-[0.97] transition-all disabled:opacity-50"
           >
             {{ forgotLoading ? 'Please wait...' : 'Send reset link' }}
           </button>
@@ -153,7 +153,7 @@ async function handleSubmit() {
               v-model="name"
               type="text"
               placeholder="Name (optional)"
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <div>
@@ -162,7 +162,7 @@ async function handleSubmit() {
               type="email"
               placeholder="Email"
               required
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <div>
@@ -172,7 +172,7 @@ async function handleSubmit() {
               placeholder="Password"
               required
               :minlength="isRegister ? 12 : undefined"
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <div v-if="!isRegister" class="text-right -mt-2">
@@ -187,13 +187,13 @@ async function handleSubmit() {
               placeholder="Confirm password"
               required
               :minlength="12"
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-3 rounded-lg bg-accent hover:bg-accent-light text-white font-medium transition-colors disabled:opacity-50"
+            class="w-full py-3 rounded-xl bg-accent hover:bg-accent-light text-white font-medium active:scale-[0.97] transition-all disabled:opacity-50"
           >
             {{ loading ? 'Please wait...' : isRegister ? 'Create account' : 'Sign in' }}
           </button>
@@ -220,7 +220,7 @@ async function handleSubmit() {
 
       <!-- Google button -->
       <button
-        class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-md"
+        class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] transition-all shadow-md"
         @click="login"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">

@@ -23,16 +23,18 @@ function formatPlayers(min: number | null, max: number | null): string {
 <template>
   <RouterLink
     :to="'/games/' + game.id"
-    class="group flex flex-col rounded-xl bg-surface-light border border-surface-lighter p-3 sm:p-5 transition-all hover:border-accent/50 hover:shadow-lg hover:shadow-accent/5 no-underline"
+    class="card-elevated group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-3 sm:p-5 hover:border-accent/50 no-underline"
   >
     <!-- Image -->
-    <div class="relative mb-2 sm:mb-3 -mx-3 -mt-3 sm:-mx-5 sm:-mt-5 overflow-hidden rounded-t-xl">
-      <img v-if="game.image_url" :src="game.image_url" :alt="game.title" class="w-full aspect-[4/3] object-cover" />
-      <div v-else class="w-full aspect-[4/3]" />
+    <div class="relative mb-2 sm:mb-3 -mx-3 -mt-3 sm:-mx-5 sm:-mt-5 overflow-hidden rounded-t-2xl">
+      <img v-if="game.image_url" :src="game.image_url" :alt="game.title" class="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105" />
+      <div v-else class="w-full aspect-[4/3] bg-surface-lighter" />
+      <!-- Gradient overlay -->
+      <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
       <!-- AI Rules badge -->
       <div
         v-if="game.rules_url"
-        class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold tracking-wide uppercase text-white bg-gradient-to-r from-accent to-purple-500 shadow-lg shadow-accent/30"
+        class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold tracking-wide uppercase text-white bg-gradient-to-r from-accent to-purple-500 shadow-lg shadow-accent/30"
       >
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
@@ -70,14 +72,14 @@ function formatPlayers(min: number | null, max: number | null): string {
     </div>
 
     <div class="flex flex-wrap gap-1 sm:gap-1.5 mt-auto">
-      <span v-if="game.is_card_game" class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-500/20 text-purple-300">Card</span>
-      <span v-if="game.is_cooperative" class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-green-500/20 text-green-300">Co-op</span>
-      <span v-if="game.plays_in_teams" class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-blue-500/20 text-blue-300">Teams</span>
-      <span v-if="game.supports_campaign" class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-amber-500/20 text-amber-300">Campaign</span>
+      <span v-if="game.is_card_game" class="badge-purple px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Card</span>
+      <span v-if="game.is_cooperative" class="badge-green px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Co-op</span>
+      <span v-if="game.plays_in_teams" class="badge-blue px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Teams</span>
+      <span v-if="game.supports_campaign" class="badge-amber px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Campaign</span>
       <span
         v-for="tag in game.tags"
         :key="tag.id"
-        class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-accent/20 text-accent-light"
+        class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-accent/10 text-accent-light border border-accent/20"
       >
         {{ tag.name }}
       </span>

@@ -189,7 +189,8 @@ onMounted(async () => {
           <img
             :src="game.image_url"
             :alt="game.title"
-            class="w-full md:w-64 rounded-xl shadow-lg object-cover"
+            class="w-full md:w-64 rounded-2xl object-cover"
+            style="box-shadow: var(--shadow-card-hover)"
           />
         </div>
 
@@ -227,10 +228,10 @@ onMounted(async () => {
 
           <!-- Property tags -->
           <div class="flex flex-wrap gap-2 mb-6">
-            <span v-if="game.is_card_game" class="px-3 py-1 rounded-full text-sm font-medium bg-purple-500/20 text-purple-300">Card Game</span>
-            <span v-if="game.is_cooperative" class="px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-300">Co-op</span>
-            <span v-if="game.plays_in_teams" class="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-300">Teams</span>
-            <span v-if="game.supports_campaign" class="px-3 py-1 rounded-full text-sm font-medium bg-amber-500/20 text-amber-300">Campaign</span>
+            <span v-if="game.is_card_game" class="badge-purple px-3 py-1 rounded-full text-sm font-medium">Card Game</span>
+            <span v-if="game.is_cooperative" class="badge-green px-3 py-1 rounded-full text-sm font-medium">Co-op</span>
+            <span v-if="game.plays_in_teams" class="badge-blue px-3 py-1 rounded-full text-sm font-medium">Teams</span>
+            <span v-if="game.supports_campaign" class="badge-amber px-3 py-1 rounded-full text-sm font-medium">Campaign</span>
           </div>
 
           <!-- Rules button -->
@@ -305,6 +306,7 @@ onMounted(async () => {
             v-for="play in plays"
             :key="play.id"
             class="flex items-center justify-between p-3 rounded-lg bg-surface border border-surface-lighter"
+            style="box-shadow: var(--shadow-card)"
           >
             <span class="text-sm text-text-secondary">{{ formatPlayDate(play.playedAt) }}</span>
             <button
@@ -333,8 +335,8 @@ onMounted(async () => {
     <!-- Log Play Modal -->
     <Teleport to="body">
       <div v-if="showLogModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60" @click="showLogModal = false" />
-        <div class="relative bg-surface rounded-xl shadow-2xl border border-surface-lighter p-6 w-full max-w-sm">
+        <div class="absolute inset-0 bg-black/60 animate-backdrop-in" @click="showLogModal = false" />
+        <div class="relative bg-surface rounded-2xl border border-surface-lighter p-6 w-full max-w-sm animate-modal-in" style="box-shadow: var(--shadow-modal)">
           <h3 class="text-lg font-semibold text-text-primary mb-4">Log Play</h3>
           <label class="block text-sm text-text-secondary mb-2">Date</label>
           <DatePicker v-model="logDate" class="mb-4" />
@@ -347,7 +349,7 @@ onMounted(async () => {
             </button>
             <button
               :disabled="loggingPlay"
-              class="px-4 py-2 rounded-lg text-sm font-medium bg-positive text-white hover:bg-positive/80 transition-colors disabled:opacity-50"
+              class="px-4 py-2 rounded-xl text-sm font-medium bg-positive text-white hover:bg-positive/80 active:scale-[0.97] transition-all disabled:opacity-50"
               @click="handleLogPlay"
             >
               {{ loggingPlay ? 'Logging...' : 'Log' }}

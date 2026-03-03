@@ -11,8 +11,8 @@ defineProps<{
 <template>
   <Teleport to="body">
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/60" @click="$emit('cancel')" />
-      <div class="relative bg-surface-light rounded-xl shadow-2xl border border-surface-lighter p-6 w-full max-w-sm">
+      <div class="absolute inset-0 bg-black/60 animate-backdrop-in" @click="$emit('cancel')" />
+      <div class="relative bg-surface-light rounded-2xl border border-surface-lighter p-6 w-full max-w-sm animate-modal-in" style="box-shadow: var(--shadow-modal)">
         <!-- Warning icon -->
         <div class="flex justify-center mb-4">
           <div class="w-12 h-12 rounded-full bg-negative/15 flex items-center justify-center">
@@ -33,7 +33,7 @@ defineProps<{
             Cancel
           </button>
           <button
-            class="px-4 py-2 rounded-lg text-sm font-medium bg-negative text-white hover:bg-negative/80 transition-colors"
+            class="px-4 py-2 rounded-xl text-sm font-medium bg-negative text-white hover:bg-negative/80 active:scale-[0.97] transition-all"
             @click="$emit('confirm')"
           >
             {{ confirmLabel }}

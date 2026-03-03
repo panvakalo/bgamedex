@@ -113,7 +113,8 @@ function handleBlur() {
       <!-- Dropdown -->
       <div
         v-if="showDropdown && (suggestions.length > 0 || canCreateNew)"
-        class="absolute z-10 top-full left-0 right-0 mt-1 bg-surface border border-surface-lighter rounded-lg shadow-xl max-h-48 overflow-y-auto"
+        class="absolute z-10 top-full left-0 right-0 mt-1 bg-surface border border-surface-lighter rounded-lg max-h-48 overflow-y-auto"
+        style="box-shadow: var(--shadow-card-hover)"
       >
         <button
           v-for="tag in suggestions"

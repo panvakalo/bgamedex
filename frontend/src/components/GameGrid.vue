@@ -107,12 +107,12 @@ function formatDuration(min: number | null, max: number | null): string {
     </div>
 
     <!-- Tiles view -->
-    <div v-if="viewMode === 'tiles'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
+    <div v-if="viewMode === 'tiles'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
       <GameCard v-for="game in games" :key="game.id" :game="game" @delete="$emit('delete', $event)" />
     </div>
 
     <!-- List view -->
-    <div v-else class="flex flex-col rounded-xl bg-surface-light border border-surface-lighter overflow-hidden">
+    <div v-else class="flex flex-col rounded-2xl bg-surface-light border border-surface-lighter overflow-hidden" style="box-shadow: var(--shadow-card)">
       <RouterLink
         v-for="game in games"
         :key="game.id"
@@ -134,14 +134,14 @@ function formatDuration(min: number | null, max: number | null): string {
           </div>
         </div>
         <div class="flex flex-wrap gap-1 flex-shrink-0">
-          <span v-if="game.is_card_game" class="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/20 text-purple-300">Card</span>
-          <span v-if="game.is_cooperative" class="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-300">Co-op</span>
-          <span v-if="game.plays_in_teams" class="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/20 text-blue-300">Teams</span>
-          <span v-if="game.supports_campaign" class="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-300">Campaign</span>
+          <span v-if="game.is_card_game" class="badge-purple px-1.5 py-0.5 rounded-full text-[10px] font-medium">Card</span>
+          <span v-if="game.is_cooperative" class="badge-green px-1.5 py-0.5 rounded-full text-[10px] font-medium">Co-op</span>
+          <span v-if="game.plays_in_teams" class="badge-blue px-1.5 py-0.5 rounded-full text-[10px] font-medium">Teams</span>
+          <span v-if="game.supports_campaign" class="badge-amber px-1.5 py-0.5 rounded-full text-[10px] font-medium">Campaign</span>
           <span
             v-for="tag in game.tags"
             :key="tag.id"
-            class="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-accent/20 text-accent-light"
+            class="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-accent/10 text-accent-light border border-accent/20"
           >
             {{ tag.name }}
           </span>

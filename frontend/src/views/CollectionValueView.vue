@@ -126,15 +126,15 @@ onMounted(fetchPrices)
     <div v-else>
       <!-- Summary cards -->
       <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-10">
-        <div class="bg-surface rounded-xl border border-surface-lighter p-3 sm:p-6 text-center">
+        <div class="bg-surface rounded-xl border border-surface-lighter p-3 sm:p-6 text-center" style="box-shadow: var(--shadow-card)">
           <p class="text-lg sm:text-3xl font-bold text-accent-light truncate">{{ formatPrice(totalValue, currency) }}</p>
           <p class="text-xs sm:text-sm text-text-secondary mt-1">Total Value</p>
         </div>
-        <div class="bg-surface rounded-xl border border-surface-lighter p-3 sm:p-6 text-center">
+        <div class="bg-surface rounded-xl border border-surface-lighter p-3 sm:p-6 text-center" style="box-shadow: var(--shadow-card)">
           <p class="text-lg sm:text-3xl font-bold text-accent-light">{{ pricedGames.length }}</p>
           <p class="text-xs sm:text-sm text-text-secondary mt-1">Games Priced</p>
         </div>
-        <div class="bg-surface rounded-xl border border-surface-lighter p-3 sm:p-6 text-center">
+        <div class="bg-surface rounded-xl border border-surface-lighter p-3 sm:p-6 text-center" style="box-shadow: var(--shadow-card)">
           <p class="text-lg sm:text-3xl font-bold text-accent-light truncate">{{ formatPrice(avgPerGame, currency) }}</p>
           <p class="text-xs sm:text-sm text-text-secondary mt-1">Avg per Game</p>
         </div>
@@ -154,6 +154,7 @@ onMounted(fetchPrices)
             <!-- Game row -->
             <button
               class="w-full flex items-center gap-3 sm:gap-4 p-3 rounded-xl bg-surface border border-surface-lighter hover:border-accent/30 transition-colors text-left"
+              style="box-shadow: var(--shadow-card)"
               @click="toggleExpand(game.gameId)"
             >
               <img
@@ -238,6 +239,7 @@ onMounted(fetchPrices)
             v-for="game in unpricedGames"
             :key="game.gameId"
             class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-xl bg-surface border border-surface-lighter"
+            style="box-shadow: var(--shadow-card)"
           >
             <RouterLink :to="`/games/${game.gameId}`" class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
               <img

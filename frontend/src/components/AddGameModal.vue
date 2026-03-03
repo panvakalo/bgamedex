@@ -93,10 +93,10 @@ function onBackdropClick(e: MouseEvent) {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm pt-[10vh]"
+    class="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm pt-[10vh] animate-backdrop-in"
     @click="onBackdropClick"
   >
-    <div class="w-full max-w-lg mx-4 rounded-xl bg-surface-light border border-surface-lighter shadow-2xl overflow-hidden">
+    <div class="w-full max-w-lg mx-4 rounded-2xl bg-surface-light border border-surface-lighter overflow-hidden animate-modal-in" style="box-shadow: var(--shadow-modal)">
       <!-- Header -->
       <div class="flex items-center justify-between px-5 py-4 border-b border-surface-lighter">
         <h2 class="text-lg font-semibold text-text-primary">Add Board Game</h2>

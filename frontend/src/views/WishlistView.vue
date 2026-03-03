@@ -181,21 +181,23 @@ onMounted(fetchWishlist)
       </div>
 
       <!-- Tiles view -->
-      <div v-if="viewMode === 'tiles'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
+      <div v-if="viewMode === 'tiles'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
         <div
           v-for="game in sortedGames"
           :key="game.id"
-          class="group flex flex-col rounded-xl bg-surface-light border border-surface-lighter p-3 sm:p-5 transition-all hover:border-accent/50 hover:shadow-lg hover:shadow-accent/5"
+          class="card-elevated group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-3 sm:p-5 hover:border-accent/50"
         >
           <!-- Image -->
           <RouterLink :to="'/games/' + game.id" class="no-underline">
-            <div class="relative mb-2 sm:mb-3 -mx-3 -mt-3 sm:-mx-5 sm:-mt-5 overflow-hidden rounded-t-xl">
+            <div class="relative mb-2 sm:mb-3 -mx-3 -mt-3 sm:-mx-5 sm:-mt-5 overflow-hidden rounded-t-2xl">
               <img v-if="game.image_url" :src="game.image_url" :alt="game.title" class="w-full aspect-[4/3] object-cover" />
               <div v-else class="w-full aspect-[4/3] bg-surface-lighter flex items-center justify-center text-text-muted">
                 <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
+              <!-- Gradient overlay -->
+              <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
             </div>
 
             <h3 class="text-sm sm:text-lg font-semibold text-text-primary leading-tight line-clamp-2 mb-2 sm:mb-3">{{ game.title }}</h3>
@@ -219,7 +221,7 @@ onMounted(fetchWishlist)
           <!-- Actions -->
           <div class="flex gap-2 mt-auto">
             <button
-              class="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium bg-accent hover:bg-accent-light text-white transition-colors"
+              class="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium bg-accent hover:bg-accent-light text-white active:scale-[0.97] transition-all"
               @click="handleMoveToCollection(game.id)"
             >
               Add to Collection
@@ -238,7 +240,7 @@ onMounted(fetchWishlist)
       </div>
 
       <!-- List view -->
-      <div v-else class="flex flex-col rounded-xl bg-surface-light border border-surface-lighter overflow-hidden">
+      <div v-else class="flex flex-col rounded-2xl bg-surface-light border border-surface-lighter overflow-hidden" style="box-shadow: var(--shadow-card)">
         <div
           v-for="game in sortedGames"
           :key="game.id"
@@ -261,13 +263,13 @@ onMounted(fetchWishlist)
             </div>
           </RouterLink>
           <button
-            class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent hover:bg-accent-light text-white transition-colors hidden sm:block"
+            class="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium bg-accent hover:bg-accent-light text-white active:scale-[0.97] transition-all hidden sm:block"
             @click="handleMoveToCollection(game.id)"
           >
             Add to Collection
           </button>
           <button
-            class="flex-shrink-0 sm:hidden px-2 py-1.5 rounded-lg text-xs font-medium bg-accent hover:bg-accent-light text-white transition-colors"
+            class="flex-shrink-0 sm:hidden px-2 py-1.5 rounded-xl text-xs font-medium bg-accent hover:bg-accent-light text-white active:scale-[0.97] transition-all"
             @click="handleMoveToCollection(game.id)"
           >
             Add
