@@ -123,6 +123,14 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal server error' })
 })
 
+// Redirect www to bare domain
+app.use((req, res, next) => {
+  if (req.hostname === 'www.bgamedex.com') {
+    return res.redirect(301, `https://bgamedex.com${req.originalUrl}`)
+  }
+  next()
+})
+
 // In production, serve the Vue frontend static files
 const frontendDist = path.join(__dirname, '..', 'public')
 app.use(express.static(frontendDist))
