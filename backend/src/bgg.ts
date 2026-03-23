@@ -131,6 +131,18 @@ export interface BggThingResult {
   maxPlaytime: number | null
 }
 
+export async function fetchBggThumbnail(bggId: number): Promise<string | null> {
+  const url = `${bggBaseUrl()}/xmlapi2/thing?id=${bggId}`
+  try {
+    const res = await fetchWithTimeout(url, { headers: bggHeaders() })
+    if (!res.ok) return null
+    const xml = await res.text()
+    return extractXmlValue(xml, 'thumbnail') ?? extractXmlValue(xml, 'image') ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function fetchBggThing(bggId: number, retries = 3): Promise<BggThingResult> {
   const url = `${bggBaseUrl()}/xmlapi2/thing?id=${bggId}`
   for (let attempt = 0; attempt < retries; attempt++) {

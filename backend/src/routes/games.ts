@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { getDb } from '../database.js'
-import { searchBggMultiple, fetchBggThing, fetchBggRulesFiles } from '../bgg.js'
+import { searchBggMultiple, fetchBggThing, fetchBggThumbnail, fetchBggRulesFiles } from '../bgg.js'
 
 const router = Router()
 
@@ -16,6 +16,21 @@ router.get('/search-bgg', async (req: Request, res: Response) => {
     res.json(results)
   } catch {
     res.status(500).json({ error: 'BGG search failed' })
+  }
+})
+
+router.get('/bgg-thumbnail/:bggId', async (req: Request, res: Response) => {
+  const bggId = Number(req.params.bggId)
+  if (isNaN(bggId)) {
+    res.status(400).json({ error: 'Invalid bggId' })
+    return
+  }
+
+  try {
+    const thumbnailUrl = await fetchBggThumbnail(bggId)
+    res.json({ thumbnailUrl })
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch thumbnail' })
   }
 })
 

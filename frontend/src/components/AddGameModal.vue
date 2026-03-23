@@ -13,6 +13,8 @@ const loading = ref(false)
 const adding = ref(false)
 const error = ref<string | null>(null)
 const selectedResult = ref<BggSearchResult | null>(null)
+const thumbnailUrl = ref<string | null>(null)
+const loadingThumbnail = ref(false)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -44,13 +46,28 @@ async function searchBgg(q: string) {
   }
 }
 
-function selectResult(result: BggSearchResult) {
+async function selectResult(result: BggSearchResult) {
   selectedResult.value = result
   error.value = null
+  thumbnailUrl.value = null
+  loadingThumbnail.value = true
+  try {
+    const { getAuthHeaders } = useAuth()
+    const res = await fetch(`/api/games/bgg-thumbnail/${result.bggId}`, { headers: getAuthHeaders() })
+    if (res.ok) {
+      const data = await res.json()
+      thumbnailUrl.value = data.thumbnailUrl
+    }
+  } catch {
+    // Thumbnail is non-critical, silently ignore
+  } finally {
+    loadingThumbnail.value = false
+  }
 }
 
 function backToSearch() {
   selectedResult.value = null
+  thumbnailUrl.value = null
   error.value = null
 }
 
@@ -122,10 +139,30 @@ function onBackdropClick(e: MouseEvent) {
             </svg>
             Back to search
           </button>
-          <p class="text-base font-semibold text-text-primary mb-1">
-            {{ selectedResult.name }}
-            <span v-if="selectedResult.yearPublished" class="text-text-muted font-normal">({{ selectedResult.yearPublished }})</span>
-          </p>
+          <div class="flex gap-4 mb-4">
+            <div class="w-24 h-24 flex-shrink-0 rounded-lg bg-surface border border-surface-lighter overflow-hidden">
+              <img
+                v-if="thumbnailUrl"
+                :src="thumbnailUrl"
+                :alt="selectedResult.name"
+                class="w-full h-full object-cover"
+              />
+              <div v-else-if="loadingThumbnail" class="w-full h-full flex items-center justify-center">
+                <div class="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+              </div>
+              <div v-else class="w-full h-full flex items-center justify-center text-text-muted">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                </svg>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-base font-semibold text-text-primary">
+                {{ selectedResult.name }}
+              </p>
+              <p v-if="selectedResult.yearPublished" class="text-sm text-text-muted">{{ selectedResult.yearPublished }}</p>
+            </div>
+          </div>
 
           <!-- Error -->
           <div v-if="error" class="mb-4 px-4 py-2.5 rounded-lg bg-negative/10 border border-negative/30 text-negative text-sm">
