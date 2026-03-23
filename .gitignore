@@ -4,6 +4,7 @@ dist/
 *.db-shm
 *.db-wal
 .env
+.claude/settings.json
 
 # Stale tsc output — Vite compiles TS directly
 frontend/src/**/*.js

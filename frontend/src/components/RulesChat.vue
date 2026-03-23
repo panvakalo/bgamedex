@@ -30,6 +30,7 @@ const { messages, isStreaming, error, sendMessage, clearChat } = useRulesChat(pr
 const { isSupported: micSupported, isListening, transcript, startListening, stopListening } = useVoiceInput()
 
 const input = ref('')
+const inputEl = ref<HTMLInputElement | null>(null)
 const messagesContainer = ref<HTMLElement | null>(null)
 
 const scrollToBottom = () => {
@@ -66,7 +67,15 @@ const handleSend = () => {
   if (!text || isStreaming.value) return
   input.value = ''
   sendMessage(text)
+  nextTick(() => inputEl.value?.focus())
 }
+
+// Re-focus input when streaming finishes
+watch(isStreaming, (streaming, wasStreaming) => {
+  if (wasStreaming && !streaming) {
+    nextTick(() => inputEl.value?.focus())
+  }
+})
 
 const toggleMic = async () => {
   if (isListening.value) {
@@ -219,6 +228,7 @@ const renderedMessages = computed(() =>
         </button>
 
         <input
+          ref="inputEl"
           v-model="input"
           @keydown.enter="handleSend"
           :disabled="isStreaming"

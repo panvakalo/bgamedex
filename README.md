@@ -100,7 +100,7 @@ fly secrets set GOOGLE_CLIENT_ID="your-google-client-id"
 fly secrets set GOOGLE_CLIENT_SECRET="your-google-client-secret"
 fly secrets set GOOGLE_REDIRECT_URI="https://bgamedex-red-wildflower-3387.fly.dev/api/auth/google/callback"
 fly secrets set FRONTEND_URL="https://bgamedex-red-wildflower-3387.fly.dev"
-fly secrets set ANTHROPIC_API_KEY="your-anthropic-api-key"
+fly secrets set OPENAI_API_KEY="your-openai-api-key"
 ```
 
 ### Re-seed the Database in Production

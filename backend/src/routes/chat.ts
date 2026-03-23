@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { getDb } from '../database.js'
 import { extractTextFromUrl } from '../pdf-extract.js'
 import { fetchRulesFromWeb } from '../rules-search.js'
@@ -172,7 +172,7 @@ router.post('/:id/chat', async (req: Request, res: Response) => {
     return
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
     res.status(503).json({ error: 'Chat service is temporarily unavailable' })
     return
@@ -186,7 +186,7 @@ router.post('/:id/chat', async (req: Request, res: Response) => {
 
 ${gameContext}`
 
-  const client = new Anthropic({ apiKey })
+  const client = new OpenAI({ apiKey })
 
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
@@ -195,28 +195,29 @@ ${gameContext}`
   res.flushHeaders()
 
   try {
-    const stream = client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+    const stream = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 1024,
-      system: systemPrompt,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      stream: true,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ],
     })
 
-    stream.on('text', (text) => {
-      res.write(`event: text\ndata: ${JSON.stringify(text)}\n\n`)
-    })
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content
+      if (text) {
+        res.write(`event: text\ndata: ${JSON.stringify(text)}\n\n`)
+      }
+    }
 
-    stream.on('end', () => {
-      res.write(`event: done\ndata: {}\n\n`)
-      res.end()
-    })
-
-    stream.on('error', () => {
-      res.write(`event: error\ndata: ${JSON.stringify('An error occurred while generating a response')}\n\n`)
-      res.end()
-    })
-  } catch {
-    res.write(`event: error\ndata: ${JSON.stringify('Failed to start chat')}\n\n`)
+    res.write(`event: done\ndata: {}\n\n`)
+    res.end()
+  } catch (err) {
+    const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+    console.error('Chat stream error:', errMsg, err)
+    res.write(`event: error\ndata: ${JSON.stringify('An error occurred while generating a response')}\n\n`)
     res.end()
   }
 })
