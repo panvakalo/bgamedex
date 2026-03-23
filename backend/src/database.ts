@@ -94,6 +94,20 @@ function initSchema(db: Database.Database): void {
   `)
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS friendships (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      requester_id INTEGER NOT NULL REFERENCES users(id),
+      addressee_id INTEGER NOT NULL REFERENCES users(id),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'rejected')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(requester_id, addressee_id)
+    )
+  `)
+  db.exec('CREATE INDEX IF NOT EXISTS idx_friendships_requester ON friendships(requester_id, status)')
+  db.exec('CREATE INDEX IF NOT EXISTS idx_friendships_addressee ON friendships(addressee_id, status)')
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS game_prices (
       bgg_id INTEGER PRIMARY KEY,
       price_data TEXT NOT NULL,

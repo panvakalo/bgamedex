@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 import type { Game } from '../types/game'
 
-defineProps<{ game: Game }>()
+const props = withDefaults(defineProps<{ game: Game; readonly?: boolean }>(), { readonly: false })
 const emit = defineEmits<{ (e: 'delete', id: number): void }>()
 
 function formatDuration(min: number | null, max: number | null): string {
@@ -21,8 +21,9 @@ function formatPlayers(min: number | null, max: number | null): string {
 </script>
 
 <template>
-  <RouterLink
-    :to="'/games/' + game.id"
+  <component
+    :is="props.readonly ? 'div' : RouterLink"
+    v-bind="props.readonly ? {} : { to: '/games/' + game.id }"
     class="card-elevated group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-3 sm:p-5 hover:border-accent/50 no-underline"
   >
     <!-- Image -->
@@ -46,6 +47,7 @@ function formatPlayers(min: number | null, max: number | null): string {
     <div class="flex items-start justify-between gap-1 mb-2 sm:mb-3">
       <h3 class="text-sm sm:text-lg font-semibold text-text-primary leading-tight line-clamp-2">{{ game.title }}</h3>
       <button
+        v-if="!props.readonly"
         class="p-1 rounded-md text-text-muted opacity-0 group-hover:opacity-100 hover:text-negative hover:bg-negative/10 transition-all flex-shrink-0"
         title="Delete game"
         @click.prevent="emit('delete', game.id)"
@@ -84,5 +86,5 @@ function formatPlayers(min: number | null, max: number | null): string {
         {{ tag.name }}
       </span>
     </div>
-  </RouterLink>
+  </component>
 </template>

@@ -4,14 +4,15 @@ import type { Game } from '../types/game'
 import type { SortOption, SortDir } from '../composables/useGames'
 import GameCard from './GameCard.vue'
 
-defineProps<{
+const props = withDefaults(defineProps<{
   games: Game[]
   loading: boolean
   totalCount: number
   viewMode: 'tiles' | 'list'
   sort: SortOption
   sortDir: SortDir
-}>()
+  readonly?: boolean
+}>(), { readonly: false })
 
 const emit = defineEmits<{
   (e: 'update:viewMode', value: 'tiles' | 'list'): void
@@ -108,15 +109,16 @@ function formatDuration(min: number | null, max: number | null): string {
 
     <!-- Tiles view -->
     <div v-if="viewMode === 'tiles'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
-      <GameCard v-for="game in games" :key="game.id" :game="game" @delete="$emit('delete', $event)" />
+      <GameCard v-for="game in games" :key="game.id" :game="game" :readonly="props.readonly" @delete="$emit('delete', $event)" />
     </div>
 
     <!-- List view -->
     <div v-else class="flex flex-col rounded-2xl bg-surface-light border border-surface-lighter overflow-hidden" style="box-shadow: var(--shadow-card)">
-      <RouterLink
+      <component
+        :is="props.readonly ? 'div' : RouterLink"
         v-for="game in games"
         :key="game.id"
-        :to="'/games/' + game.id"
+        v-bind="props.readonly ? {} : { to: '/games/' + game.id }"
         class="group flex items-center gap-4 px-4 py-3 border-b border-surface-lighter last:border-b-0 hover:bg-surface-lighter/50 transition-colors no-underline"
       >
         <img
@@ -155,6 +157,7 @@ function formatDuration(min: number | null, max: number | null): string {
           </span>
         </div>
         <button
+          v-if="!props.readonly"
           class="p-1 rounded-md text-text-muted opacity-0 group-hover:opacity-100 hover:text-negative hover:bg-negative/10 transition-all flex-shrink-0"
           title="Delete game"
           @click.prevent="$emit('delete', game.id)"
@@ -163,7 +166,7 @@ function formatDuration(min: number | null, max: number | null): string {
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
-      </RouterLink>
+      </component>
     </div>
   </template>
 </template>

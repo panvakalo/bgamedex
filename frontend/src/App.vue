@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import { useFriends } from './composables/useFriends'
 import { useFireworks } from './composables/useFireworks'
 import { useDestructiveDialog } from './composables/useDestructiveDialog'
 import { useTheme } from './composables/useTheme'
@@ -13,6 +14,7 @@ import DestructiveDialog from './components/DestructiveDialog.vue'
 const auth = useAuth()
 const route = useRoute()
 const { theme, toggle: toggleTheme } = useTheme()
+const { pendingCount, fetchPendingCount } = useFriends()
 
 // Create local refs that track the composable state
 const user = ref(auth.user.value)
@@ -24,6 +26,23 @@ watchEffect(() => {
 })
 
 const { logout, resendVerification } = auth
+
+// Poll for pending friend request count
+let pendingCountInterval: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  if (auth.isAuthenticated.value) {
+    fetchPendingCount()
+    pendingCountInterval = setInterval(fetchPendingCount, 60_000)
+  }
+})
+onUnmounted(() => clearInterval(pendingCountInterval))
+watchEffect(() => {
+  clearInterval(pendingCountInterval)
+  if (auth.isAuthenticated.value) {
+    fetchPendingCount()
+    pendingCountInterval = setInterval(fetchPendingCount, 60_000)
+  }
+})
 const bannerDismissed = ref(false)
 const resendLoading = ref(false)
 const resendSent = ref(false)
@@ -72,6 +91,12 @@ const navItems = [
     // Heart icon
     icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
   },
+  {
+    to: '/friends',
+    label: 'Friends',
+    // People icon
+    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+  },
 ]
 
 function isActive(item: typeof navItems[number]): boolean {
@@ -106,6 +131,13 @@ function isActive(item: typeof navItems[number]): boolean {
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
           </svg>
+          <!-- Pending friend requests badge -->
+          <span
+            v-if="item.to === '/friends' && pendingCount > 0"
+            class="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
+          >
+            {{ pendingCount > 9 ? '9+' : pendingCount }}
+          </span>
           <!-- Tooltip -->
           <span class="absolute left-full ml-2 px-2 py-1 rounded-md bg-surface-lighter text-text-primary text-xs whitespace-nowrap opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none transition-all duration-150">
             {{ item.label }}
@@ -198,6 +230,12 @@ function isActive(item: typeof navItems[number]): boolean {
             <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
           </svg>
           {{ item.label }}
+          <span
+            v-if="item.to === '/friends' && pendingCount > 0"
+            class="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none"
+          >
+            {{ pendingCount > 9 ? '9+' : pendingCount }}
+          </span>
         </RouterLink>
 
         <div class="border-t border-surface-lighter my-2" />

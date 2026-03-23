@@ -13,6 +13,7 @@ import authRouter from './routes/auth.js'
 import playsRouter, { statsRouter } from './routes/plays.js'
 import tagsRouter from './routes/tags.js'
 import pricesRouter from './routes/prices.js'
+import friendsRouter from './routes/friends.js'
 import { requireAuth } from './auth.js'
 
 // Validate required environment variables on startup
@@ -116,6 +117,7 @@ app.use('/api/games', requireAuth, playsRouter)
 app.use('/api/tags', requireAuth, tagsRouter)
 app.use('/api', requireAuth, statsRouter)
 app.use('/api/prices', requireAuth, expensiveLimiter, pricesRouter)
+app.use('/api/friends', requireAuth, friendsRouter)
 
 // Global error handler — never leak stack traces
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
