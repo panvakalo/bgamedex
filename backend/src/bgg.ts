@@ -92,6 +92,28 @@ export async function searchBggMultiple(query: string): Promise<BggSearchResult[
       const yearPublished = yearStr ? parseInt(yearStr, 10) : null
       results.push({ bggId, name, yearPublished })
     }
+
+    // Sort by relevance: exact matches first, then shorter names (base games
+    // over expansions), then newer games to break ties.
+    const q = query.toLowerCase()
+    results.sort((a, b) => {
+      const aLower = a.name.toLowerCase()
+      const bLower = b.name.toLowerCase()
+      const aExact = aLower === q ? 1 : 0
+      const bExact = bLower === q ? 1 : 0
+      if (aExact !== bExact) return bExact - aExact
+
+      const aStarts = aLower.startsWith(q) ? 1 : 0
+      const bStarts = bLower.startsWith(q) ? 1 : 0
+      if (aStarts !== bStarts) return bStarts - aStarts
+
+      if (a.name.length !== b.name.length) return a.name.length - b.name.length
+
+      const aYear = a.yearPublished ?? 0
+      const bYear = b.yearPublished ?? 0
+      return bYear - aYear
+    })
+
     return results
   } catch {
     return []

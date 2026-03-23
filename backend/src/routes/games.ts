@@ -13,7 +13,7 @@ router.get('/search-bgg', async (req: Request, res: Response) => {
 
   try {
     const results = await searchBggMultiple(q.trim())
-    res.json(results.slice(0, 20))
+    res.json(results)
   } catch {
     res.status(500).json({ error: 'BGG search failed' })
   }
