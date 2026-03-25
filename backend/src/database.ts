@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 import { decodeHtmlEntities } from './bgg.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DB_PATH = process.env.DB_PATH ?? path.join(__dirname, '..', 'bgamedex.db')
+export const DB_PATH = process.env.DB_PATH ?? path.join(__dirname, '..', 'bgamedex.db')
 
 let db: Database.Database
 
@@ -126,8 +126,11 @@ function initSchema(db: Database.Database): void {
     )
   `)
 
+  // Track which one-time data migrations have run
+  db.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, ran_at TEXT NOT NULL DEFAULT (datetime(\'now\')))')
+
   // Migrate columns added after initial schema
-  const migrations = ['rules_text TEXT', 'image_url TEXT', 'description TEXT', 'bgg_id INTEGER', 'rules_files TEXT', 'user_id INTEGER REFERENCES users(id)', 'password_hash TEXT', "status TEXT NOT NULL DEFAULT 'collection'"]
+  const migrations = ['rules_text TEXT', 'image_url TEXT', 'description TEXT', 'bgg_id INTEGER', 'rules_files TEXT', 'user_id INTEGER REFERENCES users(id)', "status TEXT NOT NULL DEFAULT 'collection'"]
   // Migrate users table columns
   const userMigrations = [
     'password_hash TEXT',
@@ -136,12 +139,14 @@ function initSchema(db: Database.Database): void {
     'verification_token_expires TEXT',
     'reset_token TEXT',
     'reset_token_expires TEXT',
+    'is_admin INTEGER NOT NULL DEFAULT 0',
+    'token_version INTEGER NOT NULL DEFAULT 1',
   ]
   for (const col of userMigrations) {
     try {
       db.exec(`ALTER TABLE users ADD COLUMN ${col}`)
-    } catch {
-      // Column already exists
+    } catch (e: unknown) {
+      if (!(e instanceof Error && e.message.includes('duplicate column'))) throw e
     }
   }
 
@@ -150,13 +155,17 @@ function initSchema(db: Database.Database): void {
   for (const col of migrations) {
     try {
       db.exec(`ALTER TABLE games ADD COLUMN ${col}`)
-    } catch {
-      // Column already exists — safe to ignore
+    } catch (e: unknown) {
+      if (!(e instanceof Error && e.message.includes('duplicate column'))) throw e
     }
   }
 
-  // Fix HTML-encoded text in existing games and mechanics
-  fixEncodedText(db)
+  // Fix HTML-encoded text in existing games and mechanics (run once)
+  const alreadyRan = db.prepare('SELECT 1 FROM _migrations WHERE name = ?').get('fix_encoded_text')
+  if (!alreadyRan) {
+    fixEncodedText(db)
+    db.prepare('INSERT INTO _migrations (name) VALUES (?)').run('fix_encoded_text')
+  }
 }
 
 function fixEncodedText(db: Database.Database): void {

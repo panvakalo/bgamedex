@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import { type Play, type PlayStats } from '../types/game'
-import { useAuth } from './useAuth'
 
 export function usePlayLog() {
   const plays = ref<Play[]>([])
@@ -9,10 +8,10 @@ export function usePlayLog() {
   const error = ref<string | null>(null)
 
   const logPlay = async (gameId: number, date?: string) => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/games/${gameId}/plays`, {
       method: 'POST',
-      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(date ? { date } : {}),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -23,8 +22,7 @@ export function usePlayLog() {
     loading.value = true
     error.value = null
     try {
-      const { getAuthHeaders } = useAuth()
-      const res = await fetch(`/api/games/${gameId}/plays`, { headers: getAuthHeaders() })
+      const res = await fetch(`/api/games/${gameId}/plays`, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       plays.value = await res.json()
     } catch (e) {
@@ -35,10 +33,9 @@ export function usePlayLog() {
   }
 
   const deletePlay = async (gameId: number, playId: number) => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/games/${gameId}/plays/${playId}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      credentials: 'include',
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
   }
@@ -47,8 +44,7 @@ export function usePlayLog() {
     loading.value = true
     error.value = null
     try {
-      const { getAuthHeaders } = useAuth()
-      const res = await fetch('/api/stats', { headers: getAuthHeaders() })
+      const res = await fetch('/api/stats', { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       stats.value = await res.json()
     } catch (e) {

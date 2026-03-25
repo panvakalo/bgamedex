@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
 import { type Game, type GameFilters, createDefaultFilters } from '../types/game'
-import { useAuth } from './useAuth'
 
 export type SortOption = 'alpha' | 'added' | 'most-played' | 'duration'
 export type SortDir = 'asc' | 'desc'
@@ -17,11 +16,10 @@ export function useGames() {
     loading.value = true
     error.value = null
     try {
-      const { getAuthHeaders } = useAuth()
       const params = new URLSearchParams()
       if (filters.value.tag !== null) params.set('tag', String(filters.value.tag))
       const url = params.toString() ? `/api/games?${params}` : '/api/games'
-      const res = await fetch(url, { headers: getAuthHeaders() })
+      const res = await fetch(url, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       allGames.value = await res.json()
     } catch (e) {

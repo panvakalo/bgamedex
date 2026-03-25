@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue'
+import { computed, onUnmounted, ref, watchEffect } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import { useFriends } from './composables/useFriends'
@@ -16,29 +16,13 @@ const route = useRoute()
 const { theme, toggle: toggleTheme } = useTheme()
 const { pendingCount, fetchPendingCount } = useFriends()
 
-// Create local refs that track the composable state
-const user = ref(auth.user.value)
-const isAuthenticated = ref(auth.isAuthenticated.value)
+const { user, isAuthenticated, logout, resendVerification } = auth
 
-watchEffect(() => {
-  user.value = auth.user.value
-  isAuthenticated.value = auth.isAuthenticated.value
-})
-
-const { logout, resendVerification } = auth
-
-// Poll for pending friend request count
 let pendingCountInterval: ReturnType<typeof setInterval> | undefined
-onMounted(() => {
-  if (auth.isAuthenticated.value) {
-    fetchPendingCount()
-    pendingCountInterval = setInterval(fetchPendingCount, 60_000)
-  }
-})
 onUnmounted(() => clearInterval(pendingCountInterval))
 watchEffect(() => {
   clearInterval(pendingCountInterval)
-  if (auth.isAuthenticated.value) {
+  if (isAuthenticated.value) {
     fetchPendingCount()
     pendingCountInterval = setInterval(fetchPendingCount, 60_000)
   }
@@ -48,7 +32,7 @@ const resendLoading = ref(false)
 const resendSent = ref(false)
 
 const showVerificationBanner = computed(() =>
-  auth.isAuthenticated.value && auth.user.value?.emailVerified === false && !bannerDismissed.value
+  isAuthenticated.value && user.value?.emailVerified === false && !bannerDismissed.value
 )
 
 async function handleResend() {
@@ -63,6 +47,7 @@ const userPicture = computed(() => user.value?.picture)
 const { active: fireworksActive, done: fireworksDone } = useFireworks()
 const { dialog: destructiveDialog, onConfirm, onCancel } = useDestructiveDialog()
 
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 const mobileMenuOpen = ref(false)
 
 const navItems = [
@@ -109,7 +94,7 @@ function isActive(item: typeof navItems[number]): boolean {
   <div class="min-h-screen bg-surface">
     <!-- Sidebar (desktop) -->
     <aside
-      v-if="isAuthenticated && user"
+      v-if="isAuthenticated && user && !isAdminRoute"
       class="fixed inset-y-0 left-0 z-20 hidden md:flex flex-col w-16 bg-surface border-r border-surface-lighter"
     >
       <!-- Logo -->
@@ -178,7 +163,7 @@ function isActive(item: typeof navItems[number]): boolean {
         <button
           class="group relative flex items-center justify-center w-10 h-10 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-lighter transition-colors"
           title="Sign out"
-          @click="logout(); $router.push('/login')"
+          @click="logout().then(() => $router.push('/login'))"
         >
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -192,7 +177,7 @@ function isActive(item: typeof navItems[number]): boolean {
 
     <!-- Mobile top bar -->
     <header
-      v-if="isAuthenticated && user"
+      v-if="isAuthenticated && user && !isAdminRoute"
       class="sticky top-0 z-20 md:hidden bg-surface/80 backdrop-blur-md border-b border-surface-lighter"
     >
       <div class="flex items-center justify-between px-4 py-3">
@@ -273,7 +258,7 @@ function isActive(item: typeof navItems[number]): boolean {
           </button>
           <button
             class="text-sm text-text-muted hover:text-text-primary transition-colors"
-            @click="logout(); $router.push('/login')"
+            @click="logout().then(() => $router.push('/login'))"
           >
             Sign out
           </button>
@@ -285,7 +270,7 @@ function isActive(item: typeof navItems[number]): boolean {
     <div
       v-if="showVerificationBanner"
       class="bg-amber-100 dark:bg-amber-500/15 border-b border-amber-300 dark:border-amber-500/30 px-4 py-2.5 text-sm text-amber-800 dark:text-amber-200 flex items-center justify-between gap-3"
-      :class="isAuthenticated && user ? 'md:ml-16' : ''"
+      :class="isAuthenticated && user && !isAdminRoute ? 'md:ml-16' : ''"
     >
       <div class="flex items-center gap-2 min-w-0">
         <svg class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -314,7 +299,7 @@ function isActive(item: typeof navItems[number]): boolean {
     </div>
 
     <!-- Main content area -->
-    <div :class="isAuthenticated && user ? 'md:ml-16' : ''">
+    <div :class="isAuthenticated && user && !isAdminRoute ? 'md:ml-16' : ''">
       <RouterView />
     </div>
 

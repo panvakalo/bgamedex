@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useWishlist } from '../composables/useWishlist'
 import { useNotify } from '../composables/useNotify'
 import { useDestructiveDialog } from '../composables/useDestructiveDialog'
+import { exportCsv } from '../utils/exportCsv'
 import AddGameModal from '../components/AddGameModal.vue'
 
 const { wishlist, loading, error, fetchWishlist, moveToCollection, removeFromWishlist } = useWishlist()
@@ -102,15 +103,27 @@ onMounted(fetchWishlist)
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-3xl font-bold text-text-primary">Wishlist</h1>
-      <button
-        class="flex items-center gap-1.5 px-3 h-9 rounded-xl border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
-        @click="showAddModal = true"
-      >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        <span class="hidden sm:inline">Add game</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          class="h-9 w-9 flex items-center justify-center rounded-xl border border-surface-lighter text-text-secondary hover:text-text-primary hover:border-text-muted transition-colors"
+          title="Export as CSV"
+          aria-label="Export as CSV"
+          @click="exportCsv(sortedGames, 'bgamedex-wishlist.csv')"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </button>
+        <button
+          class="flex items-center gap-1.5 px-3 h-9 rounded-xl border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
+          @click="showAddModal = true"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="hidden sm:inline">Add game</span>
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->

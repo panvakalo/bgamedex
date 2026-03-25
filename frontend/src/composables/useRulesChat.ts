@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import type { ChatMessage } from '../types/chat'
-import { useAuth } from './useAuth'
 
 export function useRulesChat(gameId: number, onChunk?: (text: string) => void) {
   const messages = ref<ChatMessage[]>([])
@@ -17,10 +16,10 @@ export function useRulesChat(gameId: number, onChunk?: (text: string) => void) {
     const assistantIndex = messages.value.length - 1
 
     try {
-      const { getAuthHeaders } = useAuth()
       const response = await fetch(`/api/games/${gameId}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           messages: messages.value.slice(0, -1), // exclude empty assistant placeholder
         }),

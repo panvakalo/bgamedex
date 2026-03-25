@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
 
-const { user, getAuthHeaders, updateUser } = useAuth()
+const { user, updateUser } = useAuth()
 
 const preview = ref<string | null>(null)
 const selectedFile = ref<File | null>(null)
@@ -39,7 +39,7 @@ async function save() {
 
     const res = await fetch('/api/auth/avatar', {
       method: 'POST',
-      headers: getAuthHeaders(),
+      credentials: 'include',
       body: form,
     })
 

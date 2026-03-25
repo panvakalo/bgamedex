@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import type { Tag } from '../types/game'
-import { useAuth } from './useAuth'
 
 export interface TagWithCount extends Tag {
   game_count: number
@@ -13,8 +12,7 @@ export function useTags() {
   const fetchTags = async () => {
     loading.value = true
     try {
-      const { getAuthHeaders } = useAuth()
-      const res = await fetch('/api/tags', { headers: getAuthHeaders() })
+      const res = await fetch('/api/tags', { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       tags.value = await res.json()
     } finally {
@@ -23,10 +21,10 @@ export function useTags() {
   }
 
   const createTag = async (name: string): Promise<Tag> => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch('/api/tags', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ name }),
     })
     if (!res.ok) {
@@ -39,10 +37,10 @@ export function useTags() {
   }
 
   const renameTag = async (id: number, name: string) => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/tags/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ name }),
     })
     if (!res.ok) {
@@ -53,20 +51,19 @@ export function useTags() {
   }
 
   const deleteTag = async (id: number) => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/tags/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      credentials: 'include',
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     await fetchTags()
   }
 
   const setGameTags = async (gameId: number, tagIds: number[], newTags: string[] = []): Promise<Tag[]> => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/games/${gameId}/tags`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ tagIds, newTags }),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)

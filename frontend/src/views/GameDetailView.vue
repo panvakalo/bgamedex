@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import type { GameDetail } from '../types/game'
-import { useAuth } from '../composables/useAuth'
 import { usePlayLog } from '../composables/usePlayLog'
 import { useNotify } from '../composables/useNotify'
 import { useDestructiveDialog } from '../composables/useDestructiveDialog'
@@ -84,8 +83,7 @@ async function deleteGame() {
   if (!confirmed) return
   deleting.value = true
   try {
-    const { getAuthHeaders } = useAuth()
-    const res = await fetch(`/api/games/${route.params.id}`, { method: 'DELETE', headers: getAuthHeaders() })
+    const res = await fetch(`/api/games/${route.params.id}`, { method: 'DELETE', credentials: 'include' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     notify('Game deleted')
     router.push('/')
@@ -99,8 +97,7 @@ async function deleteGame() {
 async function prepareRules() {
   preparingRules.value = true
   try {
-    const { getAuthHeaders } = useAuth()
-    const res = await fetch(`/api/games/${route.params.id}/prepare-rules`, { method: 'POST', headers: getAuthHeaders() })
+    const res = await fetch(`/api/games/${route.params.id}/prepare-rules`, { method: 'POST', credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
       rulesSource.value = data.status === 'ready' ? data.source : 'unavailable'
@@ -133,8 +130,7 @@ function formatPlayers(min: number | null, max: number | null): string {
 
 onMounted(async () => {
   try {
-    const { getAuthHeaders } = useAuth()
-    const res = await fetch(`/api/games/${route.params.id}`, { headers: getAuthHeaders() })
+    const res = await fetch(`/api/games/${route.params.id}`, { credentials: 'include' })
     if (!res.ok) {
       if (res.status === 404) {
         error.value = 'Game not found'

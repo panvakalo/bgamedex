@@ -4,19 +4,28 @@ import { OAuth2Client } from 'google-auth-library'
 import bcrypt from 'bcryptjs'
 import multer from 'multer'
 import { getDb } from '../database.js'
-import { signToken, requireAuth, generateVerificationToken, hashToken } from '../auth.js'
+import { signToken, verifyToken, requireAuth, generateVerificationToken, hashToken, setAuthCookie, clearAuthCookie, DUMMY_BCRYPT_HASH } from '../auth.js'
 import { sendVerificationEmail, sendPasswordResetEmail } from '../email.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024 } })
 
 const router = Router()
 
-// In-memory store for OAuth state tokens (short-lived, 10 min TTL)
 const oauthStates = new Map<string, number>()
-// One-time auth codes: code → { jwt, createdAt } (60s TTL)
 const authCodes = new Map<string, { jwt: string; createdAt: number }>()
 const STATE_TTL_MS = 10 * 60 * 1000
 const AUTH_CODE_TTL_MS = 60 * 1000
+// Prevent memory exhaustion from unbounded map growth
+const MAX_MAP_SIZE = 10_000
+
+function evictOldest(map: Map<string, unknown>, count: number) {
+  let removed = 0
+  for (const key of map.keys()) {
+    if (removed >= count) break
+    map.delete(key)
+    removed++
+  }
+}
 
 function cleanupStaleStates() {
   const now = Date.now()
@@ -38,6 +47,9 @@ function getOAuthClient(): OAuth2Client {
 
 router.get('/google', (_req: Request, res: Response) => {
   cleanupStaleStates()
+  if (oauthStates.size >= MAX_MAP_SIZE) {
+    evictOldest(oauthStates, Math.floor(MAX_MAP_SIZE / 4))
+  }
 
   const state = crypto.randomBytes(32).toString('hex')
   oauthStates.set(state, Date.now())
@@ -62,7 +74,6 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     return
   }
 
-  // Verify OAuth state parameter to prevent CSRF
   if (!state || !oauthStates.has(state)) {
     res.redirect(`${frontendUrl}/login?error=auth_failed`)
     return
@@ -82,14 +93,18 @@ router.get('/google/callback', async (req: Request, res: Response) => {
 
     const db = getDb()
 
-    const existing = db.prepare('SELECT id FROM users WHERE google_id = ?').get(payload.sub) as { id: number } | undefined
+    const existing = db.prepare('SELECT id, is_admin, token_version FROM users WHERE google_id = ?').get(payload.sub) as { id: number; is_admin: number; token_version: number } | undefined
 
     let userId: number
+    let isAdmin = false
+    let tokenVersion = 1
 
     if (existing) {
       db.prepare('UPDATE users SET email = ?, name = ?, picture = ?, email_verified = 1 WHERE id = ?')
         .run(payload.email, payload.name, payload.picture, existing.id)
       userId = existing.id
+      isAdmin = !!existing.is_admin
+      tokenVersion = existing.token_version
     } else {
       const result = db.prepare('INSERT INTO users (google_id, email, name, picture, email_verified) VALUES (?, ?, ?, ?, 1)')
         .run(payload.sub, payload.email, payload.name, payload.picture)
@@ -106,9 +121,16 @@ router.get('/google/callback', async (req: Request, res: Response) => {
       email: payload.email!,
       name: payload.name ?? '',
       emailVerified: true,
+      isAdmin,
+      ver: tokenVersion,
+      aud: 'user',
     })
 
     // Use one-time code exchange to avoid leaking JWT in URL
+    cleanupStaleStates()
+    if (authCodes.size >= MAX_MAP_SIZE) {
+      evictOldest(authCodes, Math.floor(MAX_MAP_SIZE / 4))
+    }
     const authCode = crypto.randomBytes(32).toString('hex')
     authCodes.set(authCode, { jwt: token, createdAt: Date.now() })
 
@@ -134,7 +156,9 @@ router.post('/exchange-code', (req: Request, res: Response) => {
     return
   }
 
-  res.json({ token: entry.jwt })
+  const decoded = verifyToken(entry.jwt)
+  setAuthCookie(res, entry.jwt)
+  res.json({ user: { sub: decoded.sub, email: decoded.email, name: decoded.name, picture: '', emailVerified: decoded.emailVerified } })
 })
 
 const MIN_PASSWORD_LENGTH = 12
@@ -166,15 +190,15 @@ router.post('/register', async (req: Request, res: Response) => {
   const db = getDb()
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email) as { id: number } | undefined
 
+  // Always hash to prevent timing-based email enumeration
+  const passwordHash = await bcrypt.hash(password, 12)
+
   if (existing) {
-    // Return same status/shape to prevent email enumeration via status code
-    // Use constant-time hash to prevent timing attacks
-    await bcrypt.hash(password, 12)
+    // Return same status/shape to prevent email enumeration
     res.status(201).json({ message: 'Check your email to complete registration' })
     return
   }
 
-  const passwordHash = await bcrypt.hash(password, 12)
   const verificationToken = generateVerificationToken()
   const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
@@ -187,19 +211,11 @@ router.post('/register', async (req: Request, res: Response) => {
     db.prepare('UPDATE games SET user_id = ? WHERE user_id IS NULL').run(userId)
   }
 
-  // Fire-and-forget verification email
   sendVerificationEmail(email, verificationToken).catch((err) => {
     console.error('Failed to send verification email:', err)
   })
 
-  const token = signToken({
-    sub: userId,
-    email,
-    name: name ?? email.split('@')[0],
-    emailVerified: false,
-  })
-
-  res.status(201).json({ token })
+  res.status(201).json({ message: 'Check your email to complete registration' })
 })
 
 router.post('/login', async (req: Request, res: Response) => {
@@ -211,12 +227,11 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 
   const db = getDb()
-  const user = db.prepare('SELECT id, email, name, picture, password_hash, email_verified FROM users WHERE email = ?').get(email) as {
-    id: number; email: string; name: string; picture: string | null; password_hash: string | null; email_verified: number
+  const user = db.prepare('SELECT id, email, name, picture, password_hash, email_verified, is_admin, token_version FROM users WHERE email = ?').get(email) as {
+    id: number; email: string; name: string; picture: string | null; password_hash: string | null; email_verified: number; is_admin: number; token_version: number
   } | undefined
 
-  // Constant-time-ish: always run bcrypt compare even if user doesn't exist
-  const hashToCompare = user?.password_hash ?? '$2a$12$invalidhashtopreventtimingattacks000000000000000'
+  const hashToCompare = user?.password_hash ?? DUMMY_BCRYPT_HASH
   const valid = await bcrypt.compare(password, hashToCompare)
 
   if (!user || !user.password_hash || !valid) {
@@ -229,9 +244,13 @@ router.post('/login', async (req: Request, res: Response) => {
     email: user.email,
     name: user.name ?? '',
     emailVerified: !!user.email_verified,
+    isAdmin: !!user.is_admin,
+    ver: user.token_version,
+    aud: 'user',
   })
 
-  res.json({ token })
+  setAuthCookie(res, token)
+  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: user.picture ?? '', emailVerified: !!user.email_verified } })
 })
 
 router.get('/me', requireAuth, (req: Request, res: Response) => {
@@ -240,17 +259,24 @@ router.get('/me', requireAuth, (req: Request, res: Response) => {
   res.json({ ...req.user, picture: row?.picture ?? '', emailVerified: !!row?.email_verified })
 })
 
-router.post('/verify-email', (req: Request, res: Response) => {
-  const { token: verifyToken } = req.body as { token?: string }
+router.post('/logout', requireAuth, (req: Request, res: Response) => {
+  const db = getDb()
+  db.prepare('UPDATE users SET token_version = token_version + 1 WHERE id = ?').run(req.user!.sub)
+  clearAuthCookie(res)
+  res.json({ message: 'Logged out' })
+})
 
-  if (!verifyToken || typeof verifyToken !== 'string') {
+router.post('/verify-email', (req: Request, res: Response) => {
+  const { token: verifyTokenStr } = req.body as { token?: string }
+
+  if (!verifyTokenStr || typeof verifyTokenStr !== 'string') {
     res.status(400).json({ error: 'Verification token is required' })
     return
   }
 
   const db = getDb()
-  const user = db.prepare('SELECT id, email, name, email_verified, verification_token_expires FROM users WHERE verification_token = ?').get(hashToken(verifyToken)) as {
-    id: number; email: string; name: string; email_verified: number; verification_token_expires: string | null
+  const user = db.prepare('SELECT id, email, name, email_verified, verification_token_expires, is_admin, token_version FROM users WHERE verification_token = ?').get(hashToken(verifyTokenStr)) as {
+    id: number; email: string; name: string; email_verified: number; verification_token_expires: string | null; is_admin: number; token_version: number
   } | undefined
 
   if (!user) {
@@ -270,14 +296,18 @@ router.post('/verify-email', (req: Request, res: Response) => {
 
   db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, verification_token_expires = NULL WHERE id = ?').run(user.id)
 
-  const jwt = signToken({
+  const token = signToken({
     sub: user.id,
     email: user.email,
     name: user.name,
     emailVerified: true,
+    isAdmin: !!user.is_admin,
+    ver: user.token_version,
+    aud: 'user',
   })
 
-  res.json({ token: jwt })
+  setAuthCookie(res, token)
+  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: '', emailVerified: true } })
 })
 
 router.post('/resend-verification', requireAuth, (req: Request, res: Response) => {
@@ -349,14 +379,14 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     return
   }
 
-  if (!password || password.length < MIN_PASSWORD_LENGTH) {
-    res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` })
+  if (!password || password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+    res.status(400).json({ error: `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters` })
     return
   }
 
   const db = getDb()
-  const user = db.prepare('SELECT id, email, name, email_verified, reset_token_expires FROM users WHERE reset_token = ?').get(hashToken(resetToken)) as {
-    id: number; email: string; name: string; email_verified: number; reset_token_expires: string | null
+  const user = db.prepare('SELECT id, email, name, email_verified, reset_token_expires, is_admin, token_version FROM users WHERE reset_token = ?').get(hashToken(resetToken)) as {
+    id: number; email: string; name: string; email_verified: number; reset_token_expires: string | null; is_admin: number; token_version: number
   } | undefined
 
   if (!user) {
@@ -371,7 +401,8 @@ router.post('/reset-password', async (req: Request, res: Response) => {
 
   const passwordHash = await bcrypt.hash(password, 12)
 
-  db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?')
+  // Invalidate all existing sessions by bumping token_version
+  db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL, token_version = token_version + 1 WHERE id = ?')
     .run(passwordHash, user.id)
 
   // Receiving the reset email proves email ownership
@@ -379,19 +410,23 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').run(user.id)
   }
 
-  const jwt = signToken({
+  const newTokenVersion = user.token_version + 1
+  const token = signToken({
     sub: user.id,
     email: user.email,
     name: user.name,
     emailVerified: true,
+    isAdmin: !!user.is_admin,
+    ver: newTokenVersion,
+    aud: 'user',
   })
 
-  res.json({ token: jwt })
+  setAuthCookie(res, token)
+  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: '', emailVerified: true } })
 })
 
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
-// Magic byte signatures for image validation
 const IMAGE_SIGNATURES: Array<{ mime: string; bytes: number[] }> = [
   { mime: 'image/jpeg', bytes: [0xFF, 0xD8, 0xFF] },
   { mime: 'image/png', bytes: [0x89, 0x50, 0x4E, 0x47] },

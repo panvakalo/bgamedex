@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { BggSearchResult } from '../types/game'
-import { useAuth } from '../composables/useAuth'
 import { useNotify } from '../composables/useNotify'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'added', gameId: number): void; (e: 'wishlisted'): void }>()
@@ -34,8 +33,7 @@ watch(query, (val) => {
 
 async function searchBgg(q: string) {
   try {
-    const { getAuthHeaders } = useAuth()
-    const res = await fetch(`/api/games/search-bgg?q=${encodeURIComponent(q)}`, { headers: getAuthHeaders() })
+    const res = await fetch(`/api/games/search-bgg?q=${encodeURIComponent(q)}`, { credentials: 'include' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     results.value = await res.json()
   } catch (e) {
@@ -52,8 +50,7 @@ async function selectResult(result: BggSearchResult) {
   thumbnailUrl.value = null
   loadingThumbnail.value = true
   try {
-    const { getAuthHeaders } = useAuth()
-    const res = await fetch(`/api/games/bgg-thumbnail/${result.bggId}`, { headers: getAuthHeaders() })
+    const res = await fetch(`/api/games/bgg-thumbnail/${result.bggId}`, { credentials: 'include' })
     if (res.ok) {
       const data = await res.json()
       thumbnailUrl.value = data.thumbnailUrl
@@ -76,10 +73,10 @@ async function addGame(status: 'collection' | 'wishlist') {
   adding.value = true
   error.value = null
   try {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch('/api/games', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ bggId: selectedResult.value.bggId, status }),
     })
     if (res.status === 409) {

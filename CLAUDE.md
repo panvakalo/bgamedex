@@ -10,10 +10,10 @@ Always use **camelCase** for TypeScript interfaces (axios handles API conversion
 
 ```typescript
 interface AgentDto {
-  id: number
-  profileId: number        // camelCase, not profile_id
-  createdAt: string
-  isActive: boolean
+  id: number;
+  profileId: number; // camelCase, not profile_id
+  createdAt: string;
+  isActive: boolean;
 }
 ```
 
@@ -22,18 +22,22 @@ interface AgentDto {
 Pinia stores use Composition API:
 
 ```typescript
-export const useExampleStore = defineStore('ExampleStore', () => {
-  const items = ref<Item[]>([])
-  const loading = ref(false)
+export const useExampleStore = defineStore(
+  "ExampleStore",
+  () => {
+    const items = ref<Item[]>([]);
+    const loading = ref(false);
 
-  const fetchItems = async () => {
-    loading.value = true
-    items.value = await getService().getItems()
-    loading.value = false
-  }
+    const fetchItems = async () => {
+      loading.value = true;
+      items.value = await getService().getItems();
+      loading.value = false;
+    };
 
-  return { items, loading, fetchItems }
-}, { persist: { pick: ['items'] } })
+    return { items, loading, fetchItems };
+  },
+  { persist: { pick: ["items"] } },
+);
 ```
 
 - State in `ref()`, derived in `computed()`, actions are async functions
@@ -45,13 +49,16 @@ Vue SFCs: `<script setup>` → `<template>` → `<style scoped>`
 
 ```vue
 <script setup lang="ts">
-interface Props { title: string; disabled?: boolean }
-const props = withDefaults(defineProps<Props>(), { disabled: false })
-const emit = defineEmits<{ (e: 'submit', value: string): void }>()
+interface Props {
+  title: string;
+  disabled?: boolean;
+}
+const props = withDefaults(defineProps<Props>(), { disabled: false });
+const emit = defineEmits<{ (e: "submit", value: string): void }>();
 </script>
 
 <template>
-  <div class="tw-flex tw-items-center tw-gap-2">
+  <div class="flex items-center gap-2">
     <SubHeader>{{ props.title }}</SubHeader>
     <BaseButton :disabled="props.disabled" @click="emit('submit', 'value')" />
   </div>
@@ -60,9 +67,10 @@ const emit = defineEmits<{ (e: 'submit', value: string): void }>()
 
 ### Styling
 
-1. **Tailwind CSS** - All classes prefixed with `tw-`
+1. **Tailwind CSS** - Standard utility classes (no prefix)
+
    ```html
-   <div class="tw-flex tw-items-center tw-gap-4 tw-p-2">
+   <div class="flex items-center gap-4 p-2"></div>
    ```
 
 2. **SCSS** - Only for complex styling not achievable with Tailwind
@@ -99,6 +107,7 @@ Tests are signal—AI agents treat them as truth. Bloated test files dilute that
 ### Unit Tests (Vitest)
 
 **DO:**
+
 - Test user-observable behavior (DOM, emitted events, store state)
 - Use meaningful assertions verifying actual outcomes
 - Mock at service boundaries, not implementation details
@@ -108,6 +117,7 @@ Tests are signal—AI agents treat them as truth. Bloated test files dilute that
 **Structure:** Follow **AAA** (Arrange–Act–Assert) for scannable tests. Follow **FIRST** (Fast, Independent, Repeatable, Self-validating, Timely)—kill flakiness aggressively.
 
 **DO NOT:**
+
 - Test implementation details (internal state, method calls)
 - Write tautological tests (mock → expect called)
 - Over-mock everything (provides no confidence)
@@ -116,11 +126,11 @@ Tests are signal—AI agents treat them as truth. Bloated test files dilute that
 
 ```typescript
 // Good: Tests behavior
-it('should emit addTool event when tool selected', async () => {
-  const wrapper = mount(AttachToolsField, { props })
-  await wrapper.find('[data-testid="add-tool"]').trigger('click')
-  expect(wrapper.emitted('addTool')?.[0]).toEqual([5])
-})
+it("should emit addTool event when tool selected", async () => {
+  const wrapper = mount(AttachToolsField, { props });
+  await wrapper.find('[data-testid="add-tool"]').trigger("click");
+  expect(wrapper.emitted("addTool")?.[0]).toEqual([5]);
+});
 ```
 
 ### Test File Organization
@@ -150,11 +160,13 @@ Be a collaborative partner, not a code vending machine. Question requirements be
 - **DO** wait for user to decide when to commit/push
 
 **Valid triggers for committing:**
+
 - User says "commit this" or "commit these changes"
 - User uses the `/conv-commit` command
 - User explicitly asks you to commit
 
 **NOT valid triggers:**
+
 - Task completion
 - All tests passing
 - Code review complete
@@ -169,3 +181,9 @@ Be a collaborative partner, not a code vending machine. Question requirements be
 - **No premature abstraction** - Three similar lines > unnecessary helper
 - **Security first** - Validate inputs at system boundaries
 - **Test behavior** - Verify outcomes, not implementation
+
+## RTK
+
+**Always prefix shell commands with `rtk`** — token-optimized proxy (60-90% savings). Safe passthrough: if no filter exists, command runs unchanged. In chains, prefix each: `rtk git add . && rtk git commit -m "msg"`.
+
+Covers: `git`, `gh`, `npm`, `npx`, `vitest`, `tsc`, `lint`, `ls`, `grep`, `find`, `docker`, `kubectl`, `curl`. Run `rtk gain` for savings stats.

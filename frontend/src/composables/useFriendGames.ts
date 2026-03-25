@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import type { FriendUser } from '../types/friend'
 import type { Game } from '../types/game'
-import { useAuth } from './useAuth'
 
 export function useFriendGames() {
   const games = ref<Game[]>([])
@@ -9,13 +8,11 @@ export function useFriendGames() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const { getAuthHeaders } = useAuth()
-
   const fetchFriendCollection = async (userId: number) => {
     loading.value = true
     error.value = null
     try {
-      const res = await fetch(`/api/friends/${userId}/collection`, { headers: getAuthHeaders() })
+      const res = await fetch(`/api/friends/${userId}/collection`, { credentials: 'include' })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || `HTTP ${res.status}`)
@@ -35,7 +32,7 @@ export function useFriendGames() {
     loading.value = true
     error.value = null
     try {
-      const res = await fetch(`/api/friends/${userId}/wishlist`, { headers: getAuthHeaders() })
+      const res = await fetch(`/api/friends/${userId}/wishlist`, { credentials: 'include' })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || `HTTP ${res.status}`)

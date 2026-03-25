@@ -9,3 +9,5 @@ dist/
 # Stale tsc output — Vite compiles TS directly
 frontend/src/**/*.js
 frontend/src/**/*.vue.js
+coverage/
+test-results/

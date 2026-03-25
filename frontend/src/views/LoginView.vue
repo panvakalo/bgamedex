@@ -6,7 +6,7 @@ import logoUrl from '../assets/img/BGamedex-logo.png'
 
 const route = useRoute()
 const router = useRouter()
-const { login, setToken, forgotPassword } = useAuth()
+const { login, setUserFromResponse, forgotPassword } = useAuth()
 
 const isRegister = ref(false)
 const showForgotPassword = ref(false)
@@ -71,6 +71,7 @@ async function handleSubmit() {
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(body),
     })
 
@@ -81,8 +82,8 @@ async function handleSubmit() {
       return
     }
 
-    if (data.token) {
-      setToken(data.token)
+    if (data.user) {
+      setUserFromResponse(data.user)
       router.replace('/')
     } else {
       // Registration returned a message (e.g. "check your email")

@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
@@ -14,9 +15,13 @@ import playsRouter, { statsRouter } from './routes/plays.js'
 import tagsRouter from './routes/tags.js'
 import pricesRouter from './routes/prices.js'
 import friendsRouter from './routes/friends.js'
-import { requireAuth } from './auth.js'
+import adminAuthRouter from './routes/admin/auth.js'
+import adminUsersRouter from './routes/admin/users.js'
+import adminAnalyticsRouter from './routes/admin/analytics.js'
+import adminSystemRouter from './routes/admin/system.js'
+import { requireAuth, requireAdminAuth } from './auth.js'
+import { requireAdmin } from './admin-auth.js'
 
-// Validate required environment variables on startup
 const REQUIRED_ENV = ['JWT_SECRET']
 for (const key of REQUIRED_ENV) {
   if (!process.env[key]) {
@@ -29,12 +34,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
-// Security headers
+// Trust first proxy (Fly.io) so express-rate-limit sees real client IPs
+app.set('trust proxy', 1)
+
+// Health check — before CORS/helmet so monitoring tools always reach it
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'"],
@@ -45,29 +57,36 @@ app.use(helmet({
   },
 }))
 
-// CORS — restrict to known origins
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:5173', 'http://localhost:4200']
 
 app.use(cors({
   origin(origin, callback) {
-    // Allow requests with no origin (server-to-server, curl, etc.)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // In production, reject requests with no origin (prevents null-origin attacks)
+    if (!origin) {
+      if (process.env.NODE_ENV === 'production') {
+        callback(new Error('Not allowed by CORS'))
+      } else {
+        callback(null, true)
+      }
+      return
+    }
+    if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))
     }
   },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type'],
   maxAge: 3600,
 }))
 
-// Body size limits
+app.use(cookieParser())
 app.use(express.json({ limit: '1mb' }))
 
-// Global rate limit
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -77,7 +96,13 @@ const globalLimiter = rateLimit({
 })
 app.use('/api', globalLimiter)
 
-// Stricter rate limit for auth endpoints
+app.use((req, res, next) => {
+  if (req.hostname === 'www.bgamedex.com') {
+    return res.redirect(301, `https://bgamedex.com${req.originalUrl}`)
+  }
+  next()
+})
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -86,7 +111,6 @@ const authLimiter = rateLimit({
   message: { error: 'Too many authentication attempts, please try again later' },
 })
 
-// Stricter rate limit for expensive operations (AI chat, external API calls)
 const expensiveLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
@@ -95,11 +119,21 @@ const expensiveLimiter = rateLimit({
   message: { error: 'Too many requests, please slow down' },
 })
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' })
+const adminAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again later' },
 })
 
-if (process.env.NODE_ENV !== 'production') {
+app.use('/api/admin/auth/login', adminAuthLimiter)
+app.use('/api/admin/auth', adminAuthRouter)
+app.use('/api/admin/users', requireAdminAuth, requireAdmin, adminUsersRouter)
+app.use('/api/admin/analytics', requireAdminAuth, requireAdmin, adminAnalyticsRouter)
+app.use('/api/admin/system', requireAdminAuth, requireAdmin, adminSystemRouter)
+
+if (process.env.NODE_ENV === 'development') {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 }
 app.use('/api/auth/login', authLimiter)
@@ -125,15 +159,6 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal server error' })
 })
 
-// Redirect www to bare domain
-app.use((req, res, next) => {
-  if (req.hostname === 'www.bgamedex.com') {
-    return res.redirect(301, `https://bgamedex.com${req.originalUrl}`)
-  }
-  next()
-})
-
-// In production, serve the Vue frontend static files
 const frontendDist = path.join(__dirname, '..', 'public')
 app.use(express.static(frontendDist))
 app.get('*', (_req, res, next) => {

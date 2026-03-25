@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
 import { type CollectionValue } from '../types/game'
-import { useAuth } from './useAuth'
 
 const CURRENCY_KEY = 'bgamedex_price_currency'
 const DESTINATION_KEY = 'bgamedex_price_destination'
@@ -38,9 +37,8 @@ export function useCollectionValue() {
     loading.value = true
     error.value = null
     try {
-      const { getAuthHeaders } = useAuth()
       const params = new URLSearchParams({ currency: currency.value, destination: destination.value })
-      const res = await fetch(`/api/prices?${params}`, { headers: getAuthHeaders() })
+      const res = await fetch(`/api/prices?${params}`, { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       data.value = await res.json()
     } catch (e) {
@@ -63,10 +61,10 @@ export function useCollectionValue() {
   }
 
   const setManualPrice = async (gameId: number, price: number) => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/prices/${gameId}/manual`, {
       method: 'PUT',
-      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ price }),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -76,10 +74,9 @@ export function useCollectionValue() {
   }
 
   const clearManualPrice = async (gameId: number) => {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/prices/${gameId}/manual`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      credentials: 'include',
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const game = data.value?.games.find((g) => g.gameId === gameId)

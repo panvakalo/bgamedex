@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import type { Game } from '../types/game'
-import { useAuth } from './useAuth'
 
 const wishlist = ref<Game[]>([])
 const loading = ref(false)
@@ -11,8 +10,7 @@ export function useWishlist() {
     loading.value = true
     error.value = null
     try {
-      const { getAuthHeaders } = useAuth()
-      const res = await fetch('/api/games/wishlist', { headers: getAuthHeaders() })
+      const res = await fetch('/api/games/wishlist', { credentials: 'include' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       wishlist.value = await res.json()
     } catch (e) {
@@ -23,10 +21,10 @@ export function useWishlist() {
   }
 
   async function moveToCollection(gameId: number) {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/games/${gameId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ status: 'collection' }),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -34,10 +32,9 @@ export function useWishlist() {
   }
 
   async function removeFromWishlist(gameId: number) {
-    const { getAuthHeaders } = useAuth()
     const res = await fetch(`/api/games/${gameId}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      credentials: 'include',
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     wishlist.value = wishlist.value.filter((g) => g.id !== gameId)

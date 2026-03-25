@@ -2,11 +2,11 @@
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGames } from '../composables/useGames'
-import { useAuth } from '../composables/useAuth'
 import { usePlayLog } from '../composables/usePlayLog'
 import { useNotify } from '../composables/useNotify'
 import { useFireworks } from '../composables/useFireworks'
 import { useDestructiveDialog } from '../composables/useDestructiveDialog'
+import { exportCsv } from '../utils/exportCsv'
 import { useTags } from '../composables/useTags'
 import type { Game } from '../types/game'
 import GameFilters from '../components/GameFilters.vue'
@@ -69,8 +69,7 @@ async function onDeleteGame(id: number) {
   const confirmed = await confirmDestructive({ title: 'Delete game', message: 'Delete this game from your collection? This cannot be undone.' })
   if (!confirmed) return
   try {
-    const { getAuthHeaders } = useAuth()
-    const res = await fetch(`/api/games/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
+    const res = await fetch(`/api/games/${id}`, { method: 'DELETE', credentials: 'include' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     fetchGames()
     notify('Game deleted')
@@ -101,6 +100,16 @@ onMounted(() => {
     <div class="mb-6">
       <GameFilters v-model="filters" :has-active-filters="hasActiveFilters" :tags="tags" @clear="clearFilters">
         <template #actions>
+          <button
+            class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl border border-surface-lighter text-text-secondary hover:text-text-primary hover:border-text-muted transition-colors"
+            title="Export as CSV"
+            aria-label="Export as CSV"
+            @click="exportCsv(filteredGames, 'bgamedex-collection.csv')"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </button>
           <button
             class="flex-shrink-0 h-9 flex items-center gap-1.5 px-3 rounded-xl border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
             title="Add game"

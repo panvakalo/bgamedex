@@ -5,7 +5,7 @@ import { useAuth } from '../composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
-const { setToken } = useAuth()
+const { setUserFromResponse } = useAuth()
 
 onMounted(async () => {
   const code = route.query.code as string | undefined
@@ -18,14 +18,15 @@ onMounted(async () => {
     const res = await fetch('/api/auth/exchange-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ code }),
     })
     const data = await res.json()
-    if (!res.ok || !data.token) {
+    if (!res.ok || !data.user) {
       router.replace('/login?error=auth_failed')
       return
     }
-    setToken(data.token)
+    setUserFromResponse(data.user)
     router.replace('/')
   } catch {
     router.replace('/login?error=auth_failed')

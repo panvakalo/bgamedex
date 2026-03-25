@@ -8,115 +8,43 @@ interface User {
   emailVerified: boolean
 }
 
-interface JwtPayload {
-  sub: number
-  email: string
-  name: string
-  emailVerified?: boolean
-  exp?: number
-}
-
-function decodeToken(jwt: string): Omit<User, 'picture'> | null {
-  try {
-    const parts = jwt.split('.')
-    if (parts.length !== 3) return null
-
-    const payload = JSON.parse(atob(parts[1])) as JwtPayload
-
-    if (!payload.sub || !payload.email) return null
-
-    // Reject expired tokens
-    if (payload.exp && payload.exp * 1000 < Date.now()) return null
-
-    return { sub: payload.sub, email: payload.email, name: payload.name, emailVerified: !!payload.emailVerified }
-  } catch {
-    return null
-  }
-}
-
-function isTokenExpired(jwt: string): boolean {
-  try {
-    const payload = JSON.parse(atob(jwt.split('.')[1])) as JwtPayload
-    if (!payload.exp) return false
-    return payload.exp * 1000 < Date.now()
-  } catch {
-    return true
-  }
-}
-
-const token = ref<string | null>(null)
 const user = ref<User | null>(null)
+const initializing = ref(true)
 
-async function fetchProfile() {
-  if (!token.value) return
-  try {
-    const res = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${token.value}` },
-    })
-    if (res.status === 401) {
-      // Token rejected by server — force logout
-      token.value = null
-      user.value = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      return
+let authReadyResolve: () => void
+export const authReady = new Promise<void>((resolve) => { authReadyResolve = resolve })
+
+fetch('/api/auth/me', { credentials: 'include' })
+  .then(async (res) => {
+    if (res.ok) {
+      const data = await res.json()
+      user.value = { sub: data.sub, email: data.email, name: data.name, picture: data.picture ?? '', emailVerified: !!data.emailVerified }
     }
-    if (!res.ok) return
-    const data = await res.json()
-    if (user.value) {
-      user.value = { ...user.value, picture: data.picture ?? '', emailVerified: !!data.emailVerified }
-      localStorage.setItem('user', JSON.stringify(user.value))
-    }
-  } catch { /* silent */ }
-}
+  })
+  .catch(() => { /* no session */ })
+  .finally(() => {
+    initializing.value = false
+    authReadyResolve()
+  })
 
-// Initialize from stored token
-const savedToken = localStorage.getItem('token')
-if (savedToken && !isTokenExpired(savedToken)) {
-  token.value = savedToken
-  const decoded = decodeToken(savedToken)
-  const saved = localStorage.getItem('user')
-  if (decoded && saved) {
-    try { user.value = { picture: '', ...JSON.parse(saved), ...decoded } } catch { user.value = { ...decoded, picture: '' } }
-  } else {
-    user.value = decoded ? { ...decoded, picture: '' } : null
-  }
-  fetchProfile()
-} else if (savedToken) {
-  // Expired token — clean up
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-}
-
-const isAuthenticated = computed(() => !!token.value && !!user.value)
+const isAuthenticated = computed(() => !!user.value)
 
 export function useAuth() {
-  function setToken(jwt: string) {
-    const decoded = decodeToken(jwt)
-    if (!decoded) return // Reject malformed tokens
-
-    token.value = jwt
-    user.value = { ...decoded, picture: '', emailVerified: decoded.emailVerified }
-    localStorage.setItem('token', jwt)
-    fetchProfile()
-  }
-
-  function logout() {
-    token.value = null
-    user.value = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-  }
-
-  function getAuthHeaders(): Record<string, string> {
-    const t = token.value
-    if (!t) return {}
-    // Check expiration before using
-    if (isTokenExpired(t)) {
-      logout()
-      return {}
+  function setUserFromResponse(data: { sub: number; email: string; name: string; picture?: string; emailVerified?: boolean }) {
+    user.value = {
+      sub: data.sub,
+      email: data.email,
+      name: data.name,
+      picture: data.picture ?? '',
+      emailVerified: !!data.emailVerified,
     }
-    return { Authorization: `Bearer ${t}` }
+  }
+
+  async function logout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch { /* best-effort */ }
+    user.value = null
   }
 
   function login() {
@@ -126,7 +54,6 @@ export function useAuth() {
   function updateUser(fields: Partial<User>) {
     if (user.value) {
       user.value = { ...user.value, ...fields }
-      localStorage.setItem('user', JSON.stringify(user.value))
     }
   }
 
@@ -134,17 +61,19 @@ export function useAuth() {
     const res = await fetch('/api/auth/verify-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ token: verificationToken }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? 'Verification failed')
-    if (data.token) setToken(data.token)
+    if (data.user) setUserFromResponse(data.user)
   }
 
   async function resendVerification(): Promise<void> {
     const res = await fetch('/api/auth/resend-verification', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? 'Failed to resend')
@@ -154,6 +83,7 @@ export function useAuth() {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email }),
     })
     const data = await res.json()
@@ -164,12 +94,13 @@ export function useAuth() {
     const res = await fetch('/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ token: resetToken, password }),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? 'Reset failed')
-    if (data.token) setToken(data.token)
+    if (data.user) setUserFromResponse(data.user)
   }
 
-  return { token, user, isAuthenticated, setToken, logout, getAuthHeaders, login, updateUser, verifyEmail, resendVerification, forgotPassword, resetPassword }
+  return { user, isAuthenticated, initializing, setUserFromResponse, logout, login, updateUser, verifyEmail, resendVerification, forgotPassword, resetPassword }
 }
