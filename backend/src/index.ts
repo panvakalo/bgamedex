@@ -63,13 +63,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({
   origin(origin, callback) {
-    // In production, reject requests with no origin (prevents null-origin attacks)
+    // No origin = same-origin request (frontend served by this Express app) — always allow
     if (!origin) {
-      if (process.env.NODE_ENV === 'production') {
-        callback(new Error('Not allowed by CORS'))
-      } else {
-        callback(null, true)
-      }
+      callback(null, true)
       return
     }
     if (allowedOrigins.includes(origin)) {
