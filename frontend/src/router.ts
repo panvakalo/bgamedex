@@ -21,6 +21,7 @@ const router = createRouter({
     { path: '/auth/verify', component: () => import('./views/VerifyEmailView.vue') },
     { path: '/auth/reset-password', component: () => import('./views/ResetPasswordView.vue') },
     { path: '/admin/login', component: () => import('./views/admin/AdminLoginView.vue'), meta: { admin: true } },
+    { path: '/admin/auth/callback', component: () => import('./views/admin/AdminAuthCallbackView.vue'), meta: { admin: true } },
     {
       path: '/admin',
       component: () => import('./components/admin/AdminLayout.vue'),

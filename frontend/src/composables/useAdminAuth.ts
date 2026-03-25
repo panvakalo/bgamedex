@@ -56,6 +56,14 @@ export function useAdminAuth() {
     adminUser.value = data.user
   }
 
+  function setAdminUserFromResponse(data: { sub: number; email: string; name: string; isAdmin: boolean }) {
+    adminUser.value = data
+  }
+
+  function loginWithGoogle() {
+    window.location.href = '/api/admin/auth/google'
+  }
+
   async function logout() {
     try {
       await fetch('/api/admin/auth/logout', { method: 'POST', credentials: 'include' })
@@ -64,5 +72,5 @@ export function useAdminAuth() {
     router.push('/admin/login')
   }
 
-  return { adminUser, isAdminAuthenticated, adminInitializing, login, logout }
+  return { adminUser, isAdminAuthenticated, adminInitializing, login, loginWithGoogle, setAdminUserFromResponse, logout }
 }

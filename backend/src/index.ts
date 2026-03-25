@@ -124,6 +124,8 @@ const adminAuthLimiter = rateLimit({
 })
 
 app.use('/api/admin/auth/login', adminAuthLimiter)
+app.use('/api/admin/auth/google', adminAuthLimiter)
+app.use('/api/admin/auth/exchange-code', adminAuthLimiter)
 app.use('/api/admin/auth', adminAuthRouter)
 app.use('/api/admin/users', requireAdminAuth, requireAdmin, adminUsersRouter)
 app.use('/api/admin/analytics', requireAdminAuth, requireAdmin, adminAnalyticsRouter)
