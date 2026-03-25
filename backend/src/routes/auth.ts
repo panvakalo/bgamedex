@@ -351,12 +351,12 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
   }
 
   const db = getDb()
-  const user = db.prepare('SELECT id, password_hash FROM users WHERE email = ?').get(email) as {
-    id: number; password_hash: string | null
+  const user = db.prepare('SELECT id, email_verified FROM users WHERE email = ?').get(email) as {
+    id: number; email_verified: number
   } | undefined
 
-  // Only send reset email if user exists and has a password (not Google-only)
-  if (user?.password_hash) {
+  // Send reset email to any user with a verified email (including Google-only users who need to set a password)
+  if (user?.email_verified) {
     const resetToken = generateVerificationToken()
     const tokenExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
