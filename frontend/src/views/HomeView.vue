@@ -11,6 +11,7 @@ import { useTags } from '../composables/useTags'
 import type { Game } from '../types/game'
 import GameFilters from '../components/GameFilters.vue'
 import GameGrid from '../components/GameGrid.vue'
+import OnboardingCards from '../components/OnboardingCards.vue'
 import AddGameModal from '../components/AddGameModal.vue'
 import DatePicker from '../components/DatePicker.vue'
 
@@ -96,36 +97,62 @@ onMounted(() => {
       Failed to load games: {{ error }}
     </div>
 
-    <!-- Filters + Add button -->
-    <div class="mb-6">
-      <GameFilters v-model="filters" :has-active-filters="hasActiveFilters" :tags="tags" @clear="clearFilters">
-        <template #actions>
-          <button
-            class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl border border-surface-lighter text-text-secondary hover:text-text-primary hover:border-text-muted transition-colors"
-            title="Export as CSV"
-            aria-label="Export as CSV"
-            @click="exportCsv(filteredGames, 'bgamedex-collection.csv')"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
-          <button
-            class="flex-shrink-0 h-9 flex items-center gap-1.5 px-3 rounded-xl border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
-            title="Add game"
-            @click="showAddModal = true"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="hidden sm:inline">Add game</span>
-          </button>
-        </template>
-      </GameFilters>
+    <!-- Branch 1: Initial loading with no cached games -->
+    <div v-if="loading && allGames.length === 0" class="flex justify-center py-20">
+      <div class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
     </div>
 
-    <!-- Grid -->
-    <GameGrid :games="filteredGames" :loading="loading" :total-count="allGames.length" :view-mode="viewMode" :sort="sort" :sort-dir="sortDir" @update:view-mode="viewMode = $event" @update:sort="sort = $event" @update:sort-dir="sortDir = $event" @delete="onDeleteGame" />
+    <!-- Branch 2: Truly empty collection — welcome state -->
+    <div v-else-if="allGames.length === 0" class="text-center py-20">
+      <svg class="w-16 h-16 mx-auto text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      <h2 class="text-xl font-semibold text-text-primary mb-2">Welcome to Bgamedex!</h2>
+      <p class="text-text-secondary mb-6">Start building your board game collection</p>
+      <button
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
+        @click="showAddModal = true"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add your first game
+      </button>
+    </div>
+
+    <!-- Branch 3: Normal view (has games) -->
+    <template v-else>
+      <div class="mb-6">
+        <GameFilters v-model="filters" :has-active-filters="hasActiveFilters" :tags="tags" @clear="clearFilters">
+          <template #actions>
+            <button
+              class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-xl border border-surface-lighter text-text-secondary hover:text-text-primary hover:border-text-muted transition-colors"
+              title="Export as CSV"
+              aria-label="Export as CSV"
+              @click="exportCsv(filteredGames, 'bgamedex-collection.csv')"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+            <button
+              class="flex-shrink-0 h-9 flex items-center gap-1.5 px-3 rounded-xl border border-accent bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
+              title="Add game"
+              @click="showAddModal = true"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="hidden sm:inline">Add game</span>
+            </button>
+          </template>
+        </GameFilters>
+      </div>
+
+      <OnboardingCards />
+
+      <GameGrid :games="filteredGames" :loading="loading" :total-count="allGames.length" :view-mode="viewMode" :sort="sort" :sort-dir="sortDir" @update:view-mode="viewMode = $event" @update:sort="sort = $event" @update:sort-dir="sortDir = $event" @delete="onDeleteGame" />
+    </template>
 
     <!-- Add Game Modal -->
     <AddGameModal v-if="showAddModal" @close="showAddModal = false" @added="onGameAdded" @wishlisted="showAddModal = false" />
