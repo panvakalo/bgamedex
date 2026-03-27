@@ -14,12 +14,16 @@ const error = ref<string | null>(null)
 const selectedResult = ref<BggSearchResult | null>(null)
 const thumbnailUrl = ref<string | null>(null)
 const loadingThumbnail = ref(false)
+const identifyingPhoto = ref(false)
+const identifiedName = ref<string | null>(null)
+const photoInputRef = ref<HTMLInputElement | null>(null)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(query, (val) => {
   if (debounceTimer) clearTimeout(debounceTimer)
   error.value = null
+  identifiedName.value = null
 
   if (!val.trim()) {
     results.value = []
@@ -41,6 +45,40 @@ async function searchBgg(q: string) {
     results.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function identifyFromPhoto(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  identifyingPhoto.value = true
+  identifiedName.value = null
+  error.value = null
+  results.value = []
+  query.value = ''
+
+  try {
+    const formData = new FormData()
+    formData.append('photo', file)
+    const res = await fetch('/api/games/identify-from-photo', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error || `HTTP ${res.status}`)
+    }
+    const data = await res.json()
+    identifiedName.value = data.identifiedName
+    results.value = data.results
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to identify game'
+  } finally {
+    identifyingPhoto.value = false
+    input.value = ''
   }
 }
 
@@ -193,16 +231,37 @@ function onBackdropClick(e: MouseEvent) {
       <template v-else-if="!selectedResult">
         <!-- Search input -->
         <div class="px-5 py-4">
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="query"
+                type="text"
+                placeholder="Search BoardGameGeek..."
+                class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-surface border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                autofocus
+              />
+            </div>
+            <button
+              class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface border border-surface-lighter text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors"
+              title="Identify game from photo"
+              :disabled="identifyingPhoto"
+              @click="photoInputRef?.click()"
+            >
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+              </svg>
+            </button>
             <input
-              v-model="query"
-              type="text"
-              placeholder="Search BoardGameGeek..."
-              class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-surface border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-              autofocus
+              ref="photoInputRef"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              class="hidden"
+              @change="identifyFromPhoto"
             />
           </div>
         </div>
@@ -212,15 +271,24 @@ function onBackdropClick(e: MouseEvent) {
           {{ error }}
         </div>
 
+        <!-- Identified name badge -->
+        <div v-if="identifiedName" class="mx-5 mb-3 px-3 py-2 rounded-lg bg-accent/10 border border-accent/30 text-sm text-accent-light flex items-center gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Identified: <span class="font-medium">{{ identifiedName }}</span>
+        </div>
+
         <!-- Results -->
         <div class="max-h-80 overflow-y-auto">
           <!-- Loading -->
-          <div v-if="loading" class="flex items-center justify-center py-8">
+          <div v-if="loading || identifyingPhoto" class="flex items-center justify-center py-8 gap-2">
             <div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+            <span v-if="identifyingPhoto" class="text-sm text-text-muted">Identifying game...</span>
           </div>
 
           <!-- Empty state -->
-          <div v-else-if="query.trim() && !results.length && !error" class="py-8 text-center text-text-muted text-sm">
+          <div v-else-if="(query.trim() || identifiedName) && !results.length && !error" class="py-8 text-center text-text-muted text-sm">
             No games found
           </div>
 

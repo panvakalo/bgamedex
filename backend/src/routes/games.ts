@@ -1,6 +1,20 @@
 import { Router, Request, Response } from 'express'
+import OpenAI from 'openai'
+import multer from 'multer'
 import { getDb } from '../database.js'
 import { searchBggMultiple, fetchBggThing, fetchBggThumbnail, fetchBggRulesFiles } from '../bgg.js'
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      cb(new Error('Only JPEG, PNG, and WebP images are accepted'))
+      return
+    }
+    cb(null, true)
+  },
+})
 
 const router = Router()
 
@@ -16,6 +30,44 @@ router.get('/search-bgg', async (req: Request, res: Response) => {
     res.json(results)
   } catch {
     res.status(500).json({ error: 'BGG search failed' })
+  }
+})
+
+router.post('/identify-from-photo', upload.single('photo'), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({ error: 'No image file provided' })
+    return
+  }
+
+  try {
+    const base64 = req.file.buffer.toString('base64')
+    const dataUrl = `data:${req.file.mimetype};base64,${base64}`
+
+    const openai = new OpenAI()
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Identify the board game in this photo. Return ONLY the exact game name, nothing else.' },
+            { type: 'image_url', image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      max_tokens: 100,
+    })
+
+    const identifiedName = completion.choices[0]?.message?.content?.trim()
+    if (!identifiedName) {
+      res.status(422).json({ error: 'Could not identify a board game in this image' })
+      return
+    }
+
+    const results = await searchBggMultiple(identifiedName)
+    res.json({ identifiedName, results })
+  } catch {
+    res.status(500).json({ error: 'Failed to identify game from photo' })
   }
 })
 
