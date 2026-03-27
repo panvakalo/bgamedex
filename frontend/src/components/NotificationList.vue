@@ -18,7 +18,11 @@ const { notifications, dismiss } = useNotify()
         v-for="n in notifications"
         :key="n.id"
         class="flex items-start gap-3 px-4 py-3 rounded-lg border shadow-lg bg-surface"
-        :class="n.type === 'success' ? 'border-positive/30' : 'border-negative/30'"
+        :class="{
+          'border-positive/30': n.type === 'success',
+          'border-negative/30': n.type === 'error',
+          'border-blue-400/30': n.type === 'info',
+        }"
       >
         <!-- Icon -->
         <svg
@@ -30,6 +34,16 @@ const { notifications, dismiss } = useNotify()
           stroke-width="2"
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        <svg
+          v-else-if="n.type === 'info'"
+          class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
         </svg>
         <svg
           v-else
@@ -45,7 +59,11 @@ const { notifications, dismiss } = useNotify()
         <!-- Message -->
         <span
           class="flex-1 text-sm"
-          :class="n.type === 'success' ? 'text-positive' : 'text-negative'"
+          :class="{
+            'text-positive': n.type === 'success',
+            'text-negative': n.type === 'error',
+            'text-blue-400': n.type === 'info',
+          }"
         >
           {{ n.message }}
         </span>

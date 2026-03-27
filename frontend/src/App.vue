@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import { useFriends } from './composables/useFriends'
 import { useFireworks } from './composables/useFireworks'
 import { useDestructiveDialog } from './composables/useDestructiveDialog'
 import { useTheme } from './composables/useTheme'
+import { useSSE } from './composables/useSSE'
 import NotificationList from './components/NotificationList.vue'
 import logoUrl from './assets/img/BGamedex-logo.png'
 import Fireworks from './components/Fireworks.vue'
@@ -18,13 +19,11 @@ const { pendingCount, fetchPendingCount } = useFriends()
 
 const { user, isAuthenticated, logout, resendVerification } = auth
 
-let pendingCountInterval: ReturnType<typeof setInterval> | undefined
-onUnmounted(() => clearInterval(pendingCountInterval))
+useSSE()
+
 watchEffect(() => {
-  clearInterval(pendingCountInterval)
   if (isAuthenticated.value) {
     fetchPendingCount()
-    pendingCountInterval = setInterval(fetchPendingCount, 60_000)
   }
 })
 const bannerDismissed = ref(false)

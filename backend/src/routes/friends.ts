@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { getDb } from '../database.js'
+import { sendEvent } from '../sse.js'
 
 const router = Router()
 
@@ -78,6 +79,10 @@ router.post('/requests', (req: Request, res: Response) => {
     // Reverse pending request exists — auto-accept
     if (existing.status === 'pending' && existing.requester_id === addresseeId) {
       db.prepare("UPDATE friendships SET status = 'accepted', updated_at = datetime('now') WHERE id = ?").run(existing.id)
+      const requesterName = (db.prepare('SELECT name FROM users WHERE id = ?').get(requesterId) as { name: string }).name
+      const addresseeName = (db.prepare('SELECT name FROM users WHERE id = ?').get(addresseeId) as { name: string }).name
+      sendEvent(addresseeId, { type: 'friend_accepted', data: { friendName: requesterName } })
+      sendEvent(requesterId, { type: 'friend_accepted', data: { friendName: addresseeName } })
       res.json({ message: 'Friend request accepted', friendshipId: existing.id })
       return
     }
@@ -85,6 +90,8 @@ router.post('/requests', (req: Request, res: Response) => {
     if (existing.status === 'rejected') {
       if (existing.requester_id === requesterId) {
         db.prepare("UPDATE friendships SET status = 'pending', updated_at = datetime('now') WHERE id = ?").run(existing.id)
+        const requesterName = (db.prepare('SELECT name FROM users WHERE id = ?').get(requesterId) as { name: string }).name
+        sendEvent(addresseeId, { type: 'friend_request', data: { requesterName } })
         res.status(201).json({ message: 'Friend request sent', friendshipId: existing.id })
         return
       }
@@ -96,6 +103,9 @@ router.post('/requests', (req: Request, res: Response) => {
   const result = db.prepare(
     'INSERT INTO friendships (requester_id, addressee_id) VALUES (?, ?)'
   ).run(requesterId, addresseeId)
+
+  const requesterName = (db.prepare('SELECT name FROM users WHERE id = ?').get(requesterId) as { name: string }).name
+  sendEvent(addresseeId, { type: 'friend_request', data: { requesterName } })
 
   res.status(201).json({ message: 'Friend request sent', friendshipId: result.lastInsertRowid })
 })
@@ -162,6 +172,13 @@ router.patch('/requests/:friendshipId', (req: Request, res: Response) => {
   const newStatus = action === 'accept' ? 'accepted' : 'rejected'
   db.prepare("UPDATE friendships SET status = ?, updated_at = datetime('now') WHERE id = ?").run(newStatus, friendshipId)
 
+  if (action === 'accept') {
+    const full = db.prepare(
+      'SELECT f.requester_id, u1.name AS requester_name, u2.name AS addressee_name FROM friendships f JOIN users u1 ON u1.id = f.requester_id JOIN users u2 ON u2.id = f.addressee_id WHERE f.id = ?'
+    ).get(friendshipId) as { requester_id: number; requester_name: string; addressee_name: string }
+    sendEvent(full.requester_id, { type: 'friend_accepted', data: { friendName: full.addressee_name } })
+  }
+
   res.json({ message: `Friend request ${newStatus}` })
 })
 
@@ -197,15 +214,17 @@ router.delete('/:friendshipId', (req: Request, res: Response) => {
   const db = getDb()
 
   const friendship = db.prepare(
-    "SELECT id FROM friendships WHERE id = ? AND (requester_id = ? OR addressee_id = ?) AND status = 'accepted'"
-  ).get(friendshipId, userId, userId) as { id: number } | undefined
+    "SELECT id, requester_id, addressee_id FROM friendships WHERE id = ? AND (requester_id = ? OR addressee_id = ?) AND status = 'accepted'"
+  ).get(friendshipId, userId, userId) as { id: number; requester_id: number; addressee_id: number } | undefined
 
   if (!friendship) {
     res.status(404).json({ error: 'Friendship not found' })
     return
   }
 
+  const otherUserId = friendship.requester_id === userId ? friendship.addressee_id : friendship.requester_id
   db.prepare('DELETE FROM friendships WHERE id = ?').run(friendshipId)
+  sendEvent(otherUserId, { type: 'friend_removed', data: {} })
   res.json({ message: 'Friend removed' })
 })
 

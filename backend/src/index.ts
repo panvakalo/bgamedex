@@ -21,6 +21,7 @@ import adminAnalyticsRouter from './routes/admin/analytics.js'
 import adminSystemRouter from './routes/admin/system.js'
 import { requireAuth, requireAdminAuth } from './auth.js'
 import { requireAdmin } from './admin-auth.js'
+import { addClient } from './sse.js'
 
 const REQUIRED_ENV = ['JWT_SECRET']
 for (const key of REQUIRED_ENV) {
@@ -150,6 +151,27 @@ app.use('/api/tags', requireAuth, tagsRouter)
 app.use('/api', requireAuth, statsRouter)
 app.use('/api/prices', requireAuth, expensiveLimiter, pricesRouter)
 app.use('/api/friends', requireAuth, friendsRouter)
+
+// SSE endpoint for real-time notifications
+app.get('/api/events', requireAuth, (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  })
+
+  res.write('event: connected\ndata: {}\n\n')
+
+  const heartbeat = setInterval(() => {
+    res.write(': heartbeat\n\n')
+  }, 30_000)
+
+  addClient(req.user!.sub, res)
+
+  req.on('close', () => {
+    clearInterval(heartbeat)
+  })
+})
 
 // Global error handler — never leak stack traces
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
