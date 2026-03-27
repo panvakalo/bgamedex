@@ -13,7 +13,7 @@ const props = defineProps<{
   gameTitle: string
   hasRules: boolean
   preparing: boolean
-  rulesSource: 'rules' | 'description' | 'unavailable' | null
+  rulesSource: 'rules' | 'description' | 'unavailable' | 'uploaded' | null
 }>()
 
 const { isSpeaking, speakingMessageIndex, speak, stop: stopSpeaking, feedChunk, flushBuffer, startStreaming } = useVoiceOutput()
@@ -140,7 +140,8 @@ const renderedMessages = computed(() =>
       <div ref="messagesContainer" class="h-80 overflow-y-auto px-4 py-3 space-y-3">
         <div v-if="!messages.length" class="flex flex-col items-center justify-center h-full gap-1">
           <p class="text-sm text-text-muted">Ask a question about {{ gameTitle }}'s rules</p>
-          <p v-if="rulesSource === 'description'" class="text-xs text-text-muted/60">Based on game description — no rules PDF found</p>
+          <p v-if="rulesSource === 'uploaded'" class="text-xs text-positive/70">Using community-uploaded rules</p>
+          <p v-else-if="rulesSource === 'description'" class="text-xs text-text-muted/60">Based on game description — no rules PDF found</p>
         </div>
 
         <div

@@ -4,6 +4,14 @@ import { fetchWithTimeout } from './fetch-utils.js'
 const require = createRequire(import.meta.url)
 const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>
 
+export async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
+  const data = await pdfParse(buffer)
+  if (!data.text.trim()) {
+    throw new Error('PDF contains no extractable text')
+  }
+  return data.text
+}
+
 export async function extractTextFromUrl(url: string): Promise<string> {
   const response = await fetchWithTimeout(url, { timeout: 15_000 })
 

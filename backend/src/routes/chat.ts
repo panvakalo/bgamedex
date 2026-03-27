@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express'
 import OpenAI from 'openai'
+import multer from 'multer'
 import { getDb } from '../database.js'
-import { extractTextFromUrl } from '../pdf-extract.js'
+import { extractTextFromUrl, extractTextFromBuffer } from '../pdf-extract.js'
 import { fetchRulesFromWeb } from '../rules-search.js'
 import { fetchWithTimeout } from '../fetch-utils.js'
 
@@ -20,11 +21,23 @@ interface GameRow {
   rules_text: string | null
   rules_files: string | null
   description: string | null
+  bgg_id: number | null
 }
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype !== 'application/pdf') {
+      cb(new Error('Only PDF files are accepted'))
+      return
+    }
+    cb(null, true)
+  },
+})
 
 const router = Router()
 
-type RulesSource = 'publisher-pdf' | 'bgg-file' | 'ultraboardgames' | 'description'
+type RulesSource = 'publisher-pdf' | 'bgg-file' | 'ultraboardgames' | 'description' | 'uploaded'
 
 interface RulesResult {
   text: string
@@ -63,16 +76,76 @@ async function tryExtractRules(game: GameRow): Promise<RulesResult | null> {
   return null
 }
 
+router.post('/:id/upload-rules', (req: Request, res: Response, next) => {
+  upload.single('pdf')(req, res, (err) => {
+    if (err) {
+      res.status(400).json({ error: err.message })
+      return
+    }
+    next()
+  })
+}, async (req: Request, res: Response) => {
+  const db = getDb()
+  const gameId = Number(req.params.id)
+  const userId = req.user!.sub
+
+  if (!req.file) {
+    res.status(400).json({ error: 'A PDF file is required' })
+    return
+  }
+
+  const game = db.prepare('SELECT id, title, bgg_id FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as { id: number; title: string; bgg_id: number | null } | undefined
+  if (!game) {
+    res.status(404).json({ error: 'Game not found' })
+    return
+  }
+  if (!game.bgg_id) {
+    res.status(400).json({ error: 'Game must have a BGG ID to upload rules' })
+    return
+  }
+
+  try {
+    const rawText = await extractTextFromBuffer(req.file.buffer)
+    if (rawText.length < 100) {
+      res.status(400).json({ error: 'PDF contains too little text to process (minimum 100 characters)' })
+      return
+    }
+
+    db.prepare(`
+      INSERT INTO uploaded_rules (bgg_id, rules_text, source_filename, uploaded_by)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(bgg_id) DO UPDATE SET
+        rules_text = excluded.rules_text,
+        source_filename = excluded.source_filename,
+        uploaded_by = excluded.uploaded_by,
+        updated_at = datetime('now')
+    `).run(game.bgg_id, rawText, req.file.originalname, userId)
+
+    res.json({ status: 'success', bggId: game.bgg_id })
+  } catch (err) {
+    console.error('Rules upload error:', err instanceof Error ? err.message : err)
+    res.status(500).json({ error: 'Failed to process rules PDF' })
+  }
+})
+
 router.post('/:id/prepare-rules', async (req: Request, res: Response) => {
   const db = getDb()
   const gameId = Number(req.params.id)
 
   const userId = req.user!.sub
-  const game = db.prepare('SELECT id, title, rules_url, rules_text, rules_files, description FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as GameRow | undefined
+  const game = db.prepare('SELECT id, title, rules_url, rules_text, rules_files, description, bgg_id FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as GameRow | undefined
 
   if (!game) {
     res.status(404).json({ error: 'Game not found' })
     return
+  }
+
+  if (game.bgg_id) {
+    const structured = db.prepare('SELECT 1 FROM uploaded_rules WHERE bgg_id = ?').get(game.bgg_id)
+    if (structured) {
+      res.json({ status: 'ready', source: 'uploaded' })
+      return
+    }
   }
 
   if (game.rules_text) {
@@ -139,11 +212,12 @@ router.post('/:id/chat', async (req: Request, res: Response) => {
   }
 
   const userId = req.user!.sub
-  const game = db.prepare('SELECT id, title, rules_text, description FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as {
+  const game = db.prepare('SELECT id, title, rules_text, description, bgg_id FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as {
     id: number
     title: string
     rules_text: string | null
     description: string | null
+    bgg_id: number | null
   } | undefined
 
   if (!game) {
@@ -158,7 +232,16 @@ router.post('/:id/chat', async (req: Request, res: Response) => {
   `).all(gameId) as { name: string }[]
 
   let gameContext: string
-  if (game.rules_text) {
+
+  // Priority: structured rules > raw rules_text > description + mechanics
+  let uploadedRow: { rules_text: string } | undefined
+  if (game.bgg_id) {
+    uploadedRow = db.prepare('SELECT rules_text FROM uploaded_rules WHERE bgg_id = ?').get(game.bgg_id) as { rules_text: string } | undefined
+  }
+
+  if (uploadedRow) {
+    gameContext = `UPLOADED RULES:\n---\n${uploadedRow.rules_text}\n---`
+  } else if (game.rules_text) {
     gameContext = `RULES TEXT:\n---\n${game.rules_text}\n---`
   } else if (game.description) {
     const mechanicsList = mechanics.map((m) => m.name).join(', ')

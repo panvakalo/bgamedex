@@ -12,6 +12,7 @@ export function getDb(): Database.Database {
   if (!db) {
     db = new Database(DB_PATH)
     db.pragma('journal_mode = WAL')
+    db.pragma('busy_timeout = 30000')
     db.pragma('foreign_keys = ON')
     initSchema(db)
   }
@@ -126,8 +127,34 @@ function initSchema(db: Database.Database): void {
     )
   `)
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS uploaded_rules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bgg_id INTEGER NOT NULL UNIQUE,
+      rules_text TEXT NOT NULL,
+      source_filename TEXT,
+      uploaded_by INTEGER NOT NULL REFERENCES users(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `)
+
   // Track which one-time data migrations have run
   db.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, ran_at TEXT NOT NULL DEFAULT (datetime(\'now\')))')
+
+  if (!db.prepare('SELECT 1 FROM _migrations WHERE name = ?').get('rename_rules_json_to_rules_text')) {
+    try {
+      db.exec('ALTER TABLE structured_rules RENAME COLUMN rules_json TO rules_text')
+    } catch { /* column already named rules_text */ }
+    db.prepare('INSERT INTO _migrations (name) VALUES (?)').run('rename_rules_json_to_rules_text')
+  }
+
+  if (!db.prepare('SELECT 1 FROM _migrations WHERE name = ?').get('rename_structured_rules_to_uploaded_rules')) {
+    try {
+      db.exec('ALTER TABLE structured_rules RENAME TO uploaded_rules')
+    } catch { /* table already renamed */ }
+    db.prepare('INSERT INTO _migrations (name) VALUES (?)').run('rename_structured_rules_to_uploaded_rules')
+  }
 
   // Migrate columns added after initial schema
   const migrations = ['rules_text TEXT', 'image_url TEXT', 'description TEXT', 'bgg_id INTEGER', 'rules_files TEXT', 'user_id INTEGER REFERENCES users(id)', "status TEXT NOT NULL DEFAULT 'collection'"]

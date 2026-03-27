@@ -17,8 +17,10 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const deleting = ref(false)
 const rulesReady = ref(false)
-const rulesSource = ref<'rules' | 'description' | 'unavailable' | null>(null)
+const rulesSource = ref<'rules' | 'description' | 'unavailable' | 'uploaded' | null>(null)
 const preparingRules = ref(false)
+const uploadingRules = ref(false)
+const rulesFileInput = ref<HTMLInputElement | null>(null)
 
 const { plays, fetchPlays, logPlay: logPlayApi, deletePlay: deletePlayApi } = usePlayLog()
 const { tags: allTags, fetchTags, setGameTags } = useTags()
@@ -114,6 +116,37 @@ async function prepareRules() {
   }
 }
 
+async function handleRulesUpload(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file || !game.value) return
+
+  if (file.type !== 'application/pdf') {
+    notify('Please select a PDF file', 'error')
+    return
+  }
+  uploadingRules.value = true
+  try {
+    const formData = new FormData()
+    formData.append('pdf', file)
+    const res = await fetch(`/api/games/${game.value.id}/upload-rules`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+      throw new Error(data.error || `HTTP ${res.status}`)
+    }
+    rulesSource.value = 'uploaded'
+    notify('Rules processed successfully!')
+  } catch (e) {
+    notify(e instanceof Error ? e.message : 'Failed to upload rules', 'error')
+  } finally {
+    uploadingRules.value = false
+    if (rulesFileInput.value) rulesFileInput.value.value = ''
+  }
+}
+
 function formatDuration(min: number | null, max: number | null): string {
   if (min === null && max === null) return 'N/A'
   if (min === max || max === null) return `${min} min`
@@ -142,7 +175,7 @@ onMounted(async () => {
     game.value = await res.json()
     fetchPlays(game.value!.id)
     fetchTags()
-    if (game.value!.rules_url || game.value!.description) {
+    if (game.value!.rules_url || game.value!.description || game.value!.bgg_id) {
       prepareRules()
     } else {
       rulesReady.value = true
@@ -230,19 +263,47 @@ onMounted(async () => {
             <span v-if="game.supports_campaign" class="badge-amber px-3 py-1 rounded-full text-sm font-medium">Campaign</span>
           </div>
 
-          <!-- Rules button -->
-          <a
-            v-if="game.rules_url"
-            :href="game.rules_url"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent/20 text-accent-light hover:bg-accent/30 transition-colors font-medium text-sm"
-          >
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            View Rules
-          </a>
+          <!-- Rules buttons -->
+          <div class="flex items-center gap-3">
+            <a
+              v-if="game.rules_url"
+              :href="game.rules_url"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent/20 text-accent-light hover:bg-accent/30 transition-colors font-medium text-sm"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              View Rules
+            </a>
+
+            <span v-if="game.bgg_id && rulesSource === 'uploaded'" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive/15 text-positive text-sm font-medium">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Rules uploaded
+            </span>
+            <button
+              v-if="game.bgg_id"
+              :disabled="uploadingRules"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent/20 text-accent-light hover:bg-accent/30 transition-colors font-medium text-sm disabled:opacity-50"
+              @click="rulesFileInput?.click()"
+            >
+              <svg v-if="!uploadingRules" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              <div v-else class="w-4 h-4 border-2 border-accent-light/30 border-t-accent-light rounded-full animate-spin" />
+              {{ uploadingRules ? 'Processing rules...' : rulesSource === 'uploaded' ? 'Re-upload Rules PDF' : 'Upload Rules PDF' }}
+            </button>
+            <input
+              ref="rulesFileInput"
+              type="file"
+              accept="application/pdf"
+              class="hidden"
+              @change="handleRulesUpload"
+            />
+          </div>
 
           <!-- Log Play + Play Count -->
           <div class="flex items-center gap-4 mt-4">
@@ -322,7 +383,7 @@ onMounted(async () => {
       <RulesChat
         :game-id="game.id"
         :game-title="game.title"
-        :has-rules="!!game.rules_url || !!game.description"
+        :has-rules="!!game.rules_url || !!game.description || rulesSource === 'uploaded'"
         :preparing="preparingRules"
         :rules-source="rulesSource"
       />
