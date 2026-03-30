@@ -304,7 +304,7 @@ export async function runAsyncMigrations(): Promise<void> {
 
 function chunkExistingRules(db: Database.Database): void {
   const insert = db.prepare(
-    'INSERT INTO rules_chunks (bgg_id, chunk_index, chunk_text) VALUES (?, ?, ?)'
+    'INSERT OR IGNORE INTO rules_chunks (bgg_id, chunk_index, chunk_text) VALUES (?, ?, ?)'
   )
 
   const tx = db.transaction(() => {
