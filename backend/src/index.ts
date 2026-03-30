@@ -22,6 +22,7 @@ import adminSystemRouter from './routes/admin/system.js'
 import { requireAuth, requireAdminAuth } from './auth.js'
 import { requireAdmin } from './admin-auth.js'
 import { addClient } from './sse.js'
+import { runAsyncMigrations } from './database.js'
 
 const REQUIRED_ENV = ['JWT_SECRET']
 for (const key of REQUIRED_ENV) {
@@ -195,4 +196,6 @@ if (!process.env.OPENAI_API_KEY) {
 
 app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Bgamedex API running on http://0.0.0.0:${PORT}`)
+  // Run async migrations (embedding generation) in background after startup
+  runAsyncMigrations().catch(err => console.error('[migrations] async migration failed:', err))
 })
