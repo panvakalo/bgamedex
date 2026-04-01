@@ -17,13 +17,13 @@ This runs both frontend and backend tests.
 ### 2. TypeScript check
 
 ```bash
-cd /Users/panos.vakalopoulos/workspace/panos/playdex/frontend && rtk npx vue-tsc -b --noEmit
+cd /Users/panos.vakalopoulos/workspace/panos/playdex/frontend && ./node_modules/.bin/vue-tsc -b --noEmit
 ```
 
 ### 3. Build frontend
 
 ```bash
-cd /Users/panos.vakalopoulos/workspace/panos/playdex/frontend && rtk npx vite build
+cd /Users/panos.vakalopoulos/workspace/panos/playdex/frontend && ./node_modules/.bin/vite build
 ```
 
 ### 4. Commit
