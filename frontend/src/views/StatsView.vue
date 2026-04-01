@@ -35,7 +35,7 @@ onMounted(fetchStats)
       Back to games
     </RouterLink>
 
-    <h1 class="text-3xl font-bold text-text-primary mb-8">Play Statistics</h1>
+    <h1 class="text-3xl font-extrabold text-text-primary mb-8 tracking-tight" style="font-family: var(--font-display)">Play Statistics</h1>
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-20">
@@ -51,13 +51,13 @@ onMounted(fetchStats)
     <div v-else-if="stats">
       <!-- Summary cards -->
       <div class="grid grid-cols-2 gap-4 mb-10">
-        <div class="bg-surface rounded-xl border border-surface-lighter p-6 text-center" style="box-shadow: var(--shadow-card)">
-          <p class="text-4xl font-bold text-accent-light">{{ stats.totalPlays }}</p>
-          <p class="text-sm text-text-secondary mt-1">Total Plays</p>
+        <div class="bg-surface-light rounded-2xl border border-surface-lighter p-6 text-center" style="box-shadow: var(--shadow-card)">
+          <p class="text-4xl font-extrabold text-accent-light stats-number" style="font-family: var(--font-display)">{{ stats.totalPlays }}</p>
+          <p class="text-sm text-text-muted mt-1.5" style="font-family: var(--font-serif); font-style: italic">Total Plays</p>
         </div>
-        <div class="bg-surface rounded-xl border border-surface-lighter p-6 text-center" style="box-shadow: var(--shadow-card)">
-          <p class="text-4xl font-bold text-accent-light">{{ stats.gamesPlayed }}</p>
-          <p class="text-sm text-text-secondary mt-1">Games Played</p>
+        <div class="bg-surface-light rounded-2xl border border-surface-lighter p-6 text-center" style="box-shadow: var(--shadow-card)">
+          <p class="text-4xl font-extrabold text-accent-light stats-number" style="font-family: var(--font-display)">{{ stats.gamesPlayed }}</p>
+          <p class="text-sm text-text-muted mt-1.5" style="font-family: var(--font-serif); font-style: italic">Games Played</p>
         </div>
       </div>
 

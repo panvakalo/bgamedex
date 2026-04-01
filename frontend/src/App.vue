@@ -96,7 +96,7 @@ function isActive(item: typeof navItems[number]): boolean {
     <!-- Sidebar (desktop) -->
     <aside
       v-if="isAuthenticated && user && !isAdminRoute"
-      class="fixed inset-y-0 left-0 z-20 hidden md:flex flex-col w-16 bg-surface border-r border-surface-lighter"
+      class="sidebar-surface fixed inset-y-0 left-0 z-20 hidden md:flex flex-col w-16 border-r border-surface-lighter"
     >
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center justify-center h-16 hover:opacity-80 transition-opacity">
@@ -184,7 +184,7 @@ function isActive(item: typeof navItems[number]): boolean {
       <div class="flex items-center justify-between px-4 py-3">
         <RouterLink to="/" class="flex items-center gap-2">
           <img :src="logoUrl" alt="Bgamedex" class="h-8 drop-shadow-sm" />
-          <span class="text-xl font-bold text-text-primary tracking-tight"><span class="text-accent-light">Bgame</span>dex</span>
+          <span class="text-xl font-bold text-text-primary tracking-tight font-display"><span class="text-accent-light">Bgame</span>dex</span>
         </RouterLink>
         <button
           class="flex items-center justify-center w-9 h-9 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-lighter transition-colors"

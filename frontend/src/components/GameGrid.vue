@@ -61,8 +61,10 @@ function formatDuration(min: number | null, max: number | null): string {
 
   <template v-else>
     <div class="flex items-center justify-between mb-4">
-      <p class="text-text-muted text-sm">
-        Showing {{ games.length }}<span v-if="games.length !== totalCount"> of {{ totalCount }}</span> games
+      <p class="text-text-muted text-sm" style="font-family: var(--font-body)">
+        <span class="text-2xl font-extrabold text-text-primary stats-number" style="font-family: var(--font-display)">{{ games.length }}</span>
+        <span v-if="games.length !== totalCount"> of <span class="font-bold stats-number">{{ totalCount }}</span></span>
+        <span class="ml-0.5" style="font-family: var(--font-serif); font-style: italic">games</span>
       </p>
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-1">
@@ -108,8 +110,20 @@ function formatDuration(min: number | null, max: number | null): string {
     </div>
 
     <!-- Tiles view -->
-    <div v-if="viewMode === 'tiles'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5">
-      <GameCard v-for="game in games" :key="game.id" :game="game" :readonly="props.readonly" @delete="$emit('delete', $event)" />
+    <div
+      v-if="viewMode === 'tiles'"
+      :key="`${games.length}-${games[0]?.id}`"
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"
+    >
+      <GameCard
+        v-for="(game, index) in games"
+        :key="game.id"
+        :game="game"
+        :readonly="props.readonly"
+        class="animate-card-enter"
+        :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
+        @delete="$emit('delete', $event)"
+      />
     </div>
 
     <!-- List view -->

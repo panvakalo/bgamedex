@@ -5,6 +5,7 @@ dist/
 *.db-wal
 .env
 .claude/settings.json
+VISUAL_OVERHAUL_PLAN.md
 
 # Stale tsc output — Vite compiles TS directly
 frontend/src/**/*.js

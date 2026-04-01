@@ -52,7 +52,7 @@ function parseNumInput(e: Event): number | null {
 <template>
   <div>
     <!-- Top row: filter toggle + actions -->
-    <div class="flex items-center gap-2">
+    <div class="glass-surface flex items-center gap-2 px-3 py-2 rounded-xl">
       <!-- Filter toggle button -->
       <button
         class="flex-shrink-0 relative h-9 flex items-center gap-1.5 px-3 rounded-lg border border-surface-lighter text-text-muted hover:text-text-primary hover:border-text-muted transition-colors"
@@ -65,7 +65,7 @@ function parseNumInput(e: Event): number | null {
         <span class="text-sm hidden sm:inline">Filters</span>
         <span
           v-if="hasActiveFilters"
-          class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent"
+          class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent animate-dot-pulse"
         />
       </button>
 
@@ -78,7 +78,7 @@ function parseNumInput(e: Event): number | null {
     <!-- Expanded filters panel -->
     <div
       v-if="showFilters"
-      class="mt-3 p-3 rounded-xl bg-surface border border-surface-lighter space-y-3"
+      class="mt-3 p-3 rounded-xl glass-surface animate-panel-down space-y-3"
     >
       <!-- Search -->
       <div class="relative">
@@ -89,7 +89,7 @@ function parseNumInput(e: Event): number | null {
           v-model="filters.search"
           type="text"
           placeholder="Filter by name..."
-          class="w-full h-9 pl-10 pr-4 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
+          class="w-full h-10 pl-10 pr-4 rounded-xl bg-surface-light/80 border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm shadow-inner"
         />
       </div>
 
@@ -143,9 +143,10 @@ function parseNumInput(e: Event): number | null {
             'h-9 px-2.5 rounded-lg border text-sm font-medium transition-all cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5',
             triStateClass(filters[toggle.key]),
           ]"
+          :style="filters[toggle.key] === true ? { background: 'linear-gradient(135deg, rgba(22,163,74,0.15), rgba(22,163,74,0.25))' } : undefined"
           @click="cycleTriState(toggle.key)"
         >
-          <span v-if="filters[toggle.key] !== null" :class="['w-1.5 h-1.5 rounded-full shrink-0', triStateDot(filters[toggle.key])]" />
+          <span v-if="filters[toggle.key] !== null" :class="['w-1.5 h-1.5 rounded-full shrink-0', triStateDot(filters[toggle.key]), filters[toggle.key] !== null && 'animate-dot-pulse']" />
           {{ toggle.label }}
         </button>
 

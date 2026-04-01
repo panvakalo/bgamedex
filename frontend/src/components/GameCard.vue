@@ -4,7 +4,7 @@ import type { Game } from '../types/game'
 import { useAuth } from '../composables/useAuth'
 
 const { hasFeature } = useAuth()
-const props = withDefaults(defineProps<{ game: Game; readonly?: boolean }>(), { readonly: false })
+const props = withDefaults(defineProps<{ game: Game; readonly?: boolean; featured?: boolean }>(), { readonly: false, featured: false })
 const emit = defineEmits<{ (e: 'delete', id: number): void }>()
 
 function formatDuration(min: number | null, max: number | null): string {
@@ -26,14 +26,28 @@ function formatPlayers(min: number | null, max: number | null): string {
   <component
     :is="props.readonly ? 'div' : RouterLink"
     v-bind="props.readonly ? {} : { to: '/games/' + game.id }"
-    class="card-elevated group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-3 sm:p-5 hover:border-accent/50 no-underline"
+    class="card-tactile group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-0 overflow-hidden relative no-underline"
   >
+    <!-- Inner glow overlay -->
+    <div class="absolute inset-0 rounded-2xl pointer-events-none z-10" style="background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 40%, rgba(0,0,0,0.02) 100%)" />
+
     <!-- Image -->
-    <div class="relative mb-2 sm:mb-3 -mx-3 -mt-3 sm:-mx-5 sm:-mt-5 overflow-hidden rounded-t-2xl">
-      <img v-if="game.image_url" :src="game.image_url" :alt="game.title" class="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105" />
-      <div v-else class="w-full aspect-[4/3] bg-surface-lighter" />
+    <div class="relative overflow-hidden">
+      <img v-if="game.image_url" :src="game.image_url" :alt="game.title" :class="['w-full object-cover transition-transform duration-500 group-hover:scale-110', featured ? 'aspect-[16/10]' : 'aspect-[3/4]']" />
+      <div v-else :class="['w-full bg-surface-lighter', featured ? 'aspect-[16/10]' : 'aspect-[3/4]']" />
       <!-- Gradient overlay -->
-      <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+      <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+      <!-- Play count overlay -->
+      <div
+        v-if="game.play_count > 0"
+        class="absolute bottom-2 left-2.5 flex items-center gap-1 text-white/90 text-[10px] font-medium"
+      >
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ game.play_count }}
+      </div>
       <!-- AI Rules badge -->
       <div
         v-if="game.rules_url && hasFeature('rules_access')"
@@ -46,8 +60,9 @@ function formatPlayers(min: number | null, max: number | null): string {
       </div>
     </div>
 
+    <div class="flex flex-col flex-1 p-3 sm:p-4">
     <div class="flex items-start justify-between gap-1 mb-2 sm:mb-3">
-      <h3 class="text-sm sm:text-lg font-semibold text-text-primary leading-tight line-clamp-2">{{ game.title }}</h3>
+      <h3 :class="['font-bold text-text-primary leading-snug tracking-tight line-clamp-2 font-display', featured ? 'text-base sm:text-xl' : 'text-sm sm:text-base']">{{ game.title }}</h3>
       <button
         v-if="!props.readonly"
         class="p-1 rounded-md text-text-muted opacity-0 group-hover:opacity-100 hover:text-negative hover:bg-negative/10 transition-all flex-shrink-0"
@@ -60,7 +75,7 @@ function formatPlayers(min: number | null, max: number | null): string {
       </button>
     </div>
 
-    <div class="flex items-center gap-3 mb-2 sm:mb-4 text-xs sm:text-sm text-text-secondary whitespace-nowrap overflow-hidden">
+    <div class="flex items-center gap-3 mb-2 sm:mb-4 text-xs text-text-muted whitespace-nowrap overflow-hidden">
       <span class="flex items-center gap-1 sm:gap-1.5">
         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -76,17 +91,18 @@ function formatPlayers(min: number | null, max: number | null): string {
     </div>
 
     <div class="flex flex-wrap gap-1 sm:gap-1.5 mt-auto">
-      <span v-if="game.is_card_game" class="badge-purple px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Card</span>
-      <span v-if="game.is_cooperative" class="badge-green px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Co-op</span>
-      <span v-if="game.plays_in_teams" class="badge-blue px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Teams</span>
-      <span v-if="game.supports_campaign" class="badge-amber px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium">Campaign</span>
+      <span v-if="game.is_card_game" class="badge-purple badge-interactive px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">Card</span>
+      <span v-if="game.is_cooperative" class="badge-green badge-interactive px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">Co-op</span>
+      <span v-if="game.plays_in_teams" class="badge-blue badge-interactive px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">Teams</span>
+      <span v-if="game.supports_campaign" class="badge-amber badge-interactive px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">Campaign</span>
       <span
         v-for="tag in game.tags"
         :key="tag.id"
-        class="px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-accent/10 text-accent-light border border-accent/20"
+        class="badge-interactive px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-accent/10 text-accent-light border border-accent/20"
       >
         {{ tag.name }}
       </span>
+    </div>
     </div>
   </component>
 </template>

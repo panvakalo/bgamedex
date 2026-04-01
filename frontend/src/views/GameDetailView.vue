@@ -221,15 +221,15 @@ onMounted(async () => {
           <img
             :src="game.image_url"
             :alt="game.title"
-            class="w-full md:w-64 rounded-2xl object-cover"
-            style="box-shadow: var(--shadow-card-hover)"
+            class="w-full md:w-64 rounded-2xl object-cover border border-surface-lighter"
+            style="box-shadow: var(--shadow-card-hover); aspect-ratio: 3/4"
           />
         </div>
 
         <!-- Info -->
         <div class="flex-1">
           <div class="flex items-start justify-between gap-4 mb-4">
-            <h1 class="text-3xl font-bold text-text-primary">{{ game.title }}</h1>
+            <h1 class="text-3xl font-extrabold text-text-primary tracking-tight font-display">{{ game.title }}</h1>
             <button
               :disabled="deleting"
               class="p-2 rounded-lg text-text-muted hover:text-negative hover:bg-negative/10 transition-colors flex-shrink-0 disabled:opacity-50"

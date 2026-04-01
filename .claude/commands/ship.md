@@ -39,7 +39,7 @@ cd /Users/panos.vakalopoulos/workspace/panos/playdex && rtk git push
 ### 6. Deploy
 
 ```bash
-cd /Users/panos.vakalopoulos/workspace/panos/playdex && fly deploy
+cd /Users/panos.vakalopoulos/workspace/panos/playdex && fly deploy --no-cache
 ```
 
 Wait for the deploy to complete and confirm it succeeded.

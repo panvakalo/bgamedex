@@ -98,7 +98,7 @@ onActivated(() => {
 </script>
 
 <template>
-  <main class="max-w-7xl mx-auto px-4 py-6">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
     <!-- Error state -->
     <div v-if="error" class="mb-6 p-4 rounded-lg bg-negative/10 border border-negative/30 text-negative">
       Failed to load games: {{ error }}
@@ -114,10 +114,10 @@ onActivated(() => {
       <svg class="w-16 h-16 mx-auto text-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
       </svg>
-      <h2 class="text-xl font-semibold text-text-primary mb-2">Welcome to Bgamedex!</h2>
-      <p class="text-text-secondary mb-6">Start building your board game collection</p>
+      <h2 class="text-2xl font-bold text-text-primary mb-2 font-display tracking-tight">Welcome to Bgamedex!</h2>
+      <p class="text-text-muted mb-6 font-serif italic">Start building your board game collection</p>
       <button
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-light text-white text-sm font-medium active:scale-[0.97] transition-all"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent hover:bg-accent-light text-white text-sm font-semibold active:scale-[0.97] transition-all shadow-sm hover:shadow-md font-display tracking-wide"
         @click="showAddModal = true"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -129,7 +129,7 @@ onActivated(() => {
 
     <!-- Branch 3: Normal view (has games) -->
     <template v-else>
-      <div class="mb-6">
+      <div class="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 pt-1 mb-6 border-b border-surface-lighter/50" style="background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur))">
         <GameFilters v-model="filters" :has-active-filters="hasActiveFilters" :tags="tags" @clear="clearFilters">
           <template #actions>
             <button
@@ -166,7 +166,7 @@ onActivated(() => {
 
     <!-- Quick Log Play FAB -->
     <button
-      class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-positive hover:bg-positive/80 text-white shadow-lg shadow-positive/30 hover:shadow-xl hover:shadow-positive/40 flex items-center justify-center active:scale-95 transition-all"
+      class="fab-play fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-positive hover:bg-positive/80 text-white flex items-center justify-center active:scale-95 transition-all"
       title="Quick log play"
       @click="openFabModal"
     >

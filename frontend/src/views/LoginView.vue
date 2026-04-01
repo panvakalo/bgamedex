@@ -99,14 +99,20 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <main class="flex items-center justify-center min-h-[calc(100vh-73px)]">
-    <div class="w-full max-w-sm mx-4">
-      <div class="text-center mb-8">
-        <img :src="logoUrl" alt="Bgamedex" class="h-32 mx-auto mb-3 drop-shadow-sm" />
-        <h1 class="text-4xl font-bold text-text-primary mb-2">
+  <main class="flex items-center justify-center min-h-screen relative overflow-hidden">
+    <!-- Ambient background shapes -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.04]" style="background: radial-gradient(circle, var(--theme-accent) 0%, transparent 70%)" />
+      <div class="absolute -bottom-48 -left-24 w-[500px] h-[500px] rounded-full opacity-[0.03]" style="background: radial-gradient(circle, var(--theme-accent2) 0%, transparent 70%)" />
+    </div>
+
+    <div class="relative w-full max-w-sm mx-4 animate-fade-up">
+      <div class="text-center mb-10">
+        <img :src="logoUrl" alt="Bgamedex" class="h-28 mx-auto mb-4 drop-shadow-md animate-float" />
+        <h1 class="text-4xl font-extrabold text-text-primary mb-1.5 font-display tracking-tight">
           <span class="text-accent-light">Bgame</span>dex
         </h1>
-        <p class="text-text-secondary">Your board game collection</p>
+        <p class="text-text-muted font-serif italic text-lg">Your board game collection</p>
       </div>
 
       <div v-if="successMessage" class="mb-6 px-4 py-3 rounded-lg bg-positive/10 border border-positive/30 text-positive text-sm">
@@ -130,13 +136,13 @@ async function handleSubmit() {
               type="email"
               placeholder="Email"
               required
-              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40 transition-all duration-200"
             />
           </div>
           <button
             type="submit"
             :disabled="forgotLoading"
-            class="w-full py-3 rounded-xl bg-accent hover:bg-accent-light text-white font-medium active:scale-[0.97] transition-all disabled:opacity-50"
+            class="w-full py-3 rounded-xl bg-accent hover:bg-accent-light text-white font-semibold active:scale-[0.97] transition-all disabled:opacity-50 shadow-sm hover:shadow-md font-display tracking-wide"
           >
             {{ forgotLoading ? 'Please wait...' : 'Send reset link' }}
           </button>
@@ -154,7 +160,7 @@ async function handleSubmit() {
               v-model="name"
               type="text"
               placeholder="Name (optional)"
-              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40 transition-all duration-200"
             />
           </div>
           <div>
@@ -163,7 +169,7 @@ async function handleSubmit() {
               type="email"
               placeholder="Email"
               required
-              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40 transition-all duration-200"
             />
           </div>
           <div>
@@ -173,7 +179,7 @@ async function handleSubmit() {
               placeholder="Password"
               required
               :minlength="isRegister ? 12 : undefined"
-              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40 transition-all duration-200"
             />
           </div>
           <div v-if="!isRegister" class="text-right -mt-2">
@@ -188,13 +194,13 @@ async function handleSubmit() {
               placeholder="Confirm password"
               required
               :minlength="12"
-              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+              class="w-full px-4 py-3 rounded-xl bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40 transition-all duration-200"
             />
           </div>
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-3 rounded-xl bg-accent hover:bg-accent-light text-white font-medium active:scale-[0.97] transition-all disabled:opacity-50"
+            class="w-full py-3 rounded-xl bg-accent hover:bg-accent-light text-white font-semibold active:scale-[0.97] transition-all disabled:opacity-50 shadow-sm hover:shadow-md font-display tracking-wide"
           >
             {{ loading ? 'Please wait...' : isRegister ? 'Create account' : 'Sign in' }}
           </button>
@@ -221,7 +227,7 @@ async function handleSubmit() {
 
       <!-- Google button -->
       <button
-        class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] transition-all shadow-md"
+        class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] transition-all shadow-sm hover:shadow-md border border-gray-100"
         @click="login"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -234,4 +240,13 @@ async function handleSubmit() {
       </button>
     </div>
   </main>
+
+<style scoped>
+.font-serif {
+  font-family: var(--font-serif);
+}
+.font-display {
+  font-family: var(--font-display);
+}
+</style>
 </template>
