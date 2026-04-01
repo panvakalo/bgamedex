@@ -159,6 +159,53 @@ router.post('/:id/features', (req: Request, res: Response) => {
   res.json({ features: getUserFeatures(db, id) })
 })
 
+router.delete('/:id', (req: Request, res: Response) => {
+  const db = getDb()
+  const id = parseInt(req.params.id as string)
+
+  if (isNaN(id)) {
+    res.status(400).json({ error: 'Invalid user ID' })
+    return
+  }
+
+  if (req.user!.sub === id) {
+    res.status(400).json({ error: 'Cannot delete your own account' })
+    return
+  }
+
+  const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(id) as { id: number } | undefined
+  if (!existing) {
+    res.status(404).json({ error: 'User not found' })
+    return
+  }
+
+  const deleteUser = db.transaction(() => {
+    // Get user's game IDs for cascading cleanup
+    const gameIds = (db.prepare('SELECT id FROM games WHERE user_id = ?').all(id) as { id: number }[]).map(g => g.id)
+
+    if (gameIds.length) {
+      const placeholders = gameIds.map(() => '?').join(',')
+      db.prepare(`DELETE FROM game_tags WHERE game_id IN (${placeholders})`).run(...gameIds)
+      db.prepare(`DELETE FROM game_mechanics WHERE game_id IN (${placeholders})`).run(...gameIds)
+      db.prepare(`DELETE FROM game_prices WHERE game_id IN (${placeholders})`).run(...gameIds)
+      db.prepare(`DELETE FROM rules_chunks WHERE game_id IN (${placeholders})`).run(...gameIds)
+    }
+
+    db.prepare('DELETE FROM plays WHERE user_id = ?').run(id)
+    db.prepare('DELETE FROM manual_prices WHERE user_id = ?').run(id)
+    db.prepare('DELETE FROM tags WHERE user_id = ?').run(id)
+    db.prepare('DELETE FROM games WHERE user_id = ?').run(id)
+    db.prepare('DELETE FROM friendships WHERE requester_id = ? OR addressee_id = ?').run(id, id)
+    db.prepare('DELETE FROM uploaded_rules WHERE uploaded_by = ?').run(id)
+    db.prepare('DELETE FROM rules_history WHERE uploaded_by = ?').run(id)
+    db.prepare('DELETE FROM user_features WHERE user_id = ?').run(id)
+    db.prepare('DELETE FROM users WHERE id = ?').run(id)
+  })
+
+  deleteUser()
+  res.json({ message: 'User deleted' })
+})
+
 router.delete('/:id/features/:feature', (req: Request, res: Response) => {
   const db = getDb()
   const id = parseInt(req.params.id as string)
