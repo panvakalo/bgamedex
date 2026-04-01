@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import type { Game } from '../types/game'
+import { useAuth } from '../composables/useAuth'
 
+const { hasFeature } = useAuth()
 const props = withDefaults(defineProps<{ game: Game; readonly?: boolean }>(), { readonly: false })
 const emit = defineEmits<{ (e: 'delete', id: number): void }>()
 
@@ -34,7 +36,7 @@ function formatPlayers(min: number | null, max: number | null): string {
       <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
       <!-- AI Rules badge -->
       <div
-        v-if="game.rules_url"
+        v-if="game.rules_url && hasFeature('rules_access')"
         class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold tracking-wide uppercase text-white bg-gradient-to-r from-accent to-purple-500 shadow-lg shadow-accent/30"
       >
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
