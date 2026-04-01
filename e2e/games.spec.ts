@@ -77,7 +77,7 @@ test.describe('Game management', () => {
     await expect(page.getByText('Pandemic')).toBeVisible()
     await expect(page.getByText('Patchwork')).toBeVisible()
 
-    await page.getByPlaceholder('Search games...').fill('Pan')
+    await page.getByPlaceholder('Filter by name...').fill('Pan')
 
     await expect(page.getByText('Pandemic')).toBeVisible()
     await expect(page.getByText('Ticket to Ride')).not.toBeVisible()

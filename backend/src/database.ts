@@ -8,6 +8,9 @@ import { generateEmbeddings } from './embeddings.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const DB_PATH = process.env.DB_PATH ?? path.join(__dirname, '..', 'bgamedex.db')
 
+export const KNOWN_FEATURES = ['rules_access'] as const
+export type FeatureName = typeof KNOWN_FEATURES[number]
+
 let db: Database.Database
 
 export function getDb(): Database.Database {
@@ -190,6 +193,15 @@ function initSchema(db: Database.Database): void {
       INSERT INTO rules_chunks_fts(rules_chunks_fts, rowid, chunk_text) VALUES('delete', old.id, old.chunk_text);
       INSERT INTO rules_chunks_fts(rowid, chunk_text) VALUES (new.id, new.chunk_text);
     END
+  `)
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_features (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      feature TEXT NOT NULL,
+      granted_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, feature)
+    )
   `)
 
   // Track which one-time data migrations have run

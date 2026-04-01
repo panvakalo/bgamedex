@@ -6,6 +6,12 @@ import { useAdminAuth, adminAuthReady } from './composables/useAdminAuth'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    // Don't scroll to top when returning to KeepAlive'd home — scroll is already correct
+    if (to.path === '/') return false
+    return { top: 0 }
+  },
   routes: [
     { path: '/', component: HomeView },
     { path: '/games/:id', component: () => import('./views/GameDetailView.vue') },

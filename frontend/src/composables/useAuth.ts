@@ -6,6 +6,7 @@ interface User {
   name: string
   picture: string
   emailVerified: boolean
+  features: string[]
 }
 
 const user = ref<User | null>(null)
@@ -18,7 +19,7 @@ fetch('/api/auth/me', { credentials: 'include' })
   .then(async (res) => {
     if (res.ok) {
       const data = await res.json()
-      user.value = { sub: data.sub, email: data.email, name: data.name, picture: data.picture ?? '', emailVerified: !!data.emailVerified }
+      user.value = { sub: data.sub, email: data.email, name: data.name, picture: data.picture ?? '', emailVerified: !!data.emailVerified, features: data.features ?? [] }
     }
   })
   .catch(() => { /* no session */ })
@@ -30,14 +31,19 @@ fetch('/api/auth/me', { credentials: 'include' })
 const isAuthenticated = computed(() => !!user.value)
 
 export function useAuth() {
-  function setUserFromResponse(data: { sub: number; email: string; name: string; picture?: string; emailVerified?: boolean }) {
+  function setUserFromResponse(data: { sub: number; email: string; name: string; picture?: string; emailVerified?: boolean; features?: string[] }) {
     user.value = {
       sub: data.sub,
       email: data.email,
       name: data.name,
       picture: data.picture ?? '',
       emailVerified: !!data.emailVerified,
+      features: data.features ?? [],
     }
+  }
+
+  function hasFeature(name: string): boolean {
+    return user.value?.features.includes(name) ?? false
   }
 
   async function logout() {
@@ -102,5 +108,5 @@ export function useAuth() {
     if (data.user) setUserFromResponse(data.user)
   }
 
-  return { user, isAuthenticated, initializing, setUserFromResponse, logout, login, updateUser, verifyEmail, resendVerification, forgotPassword, resetPassword }
+  return { user, isAuthenticated, initializing, setUserFromResponse, logout, login, updateUser, hasFeature, verifyEmail, resendVerification, forgotPassword, resetPassword }
 }

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue'
+import { onMounted, onActivated, ref, computed, watch } from 'vue'
+
+defineOptions({ name: 'HomeView' })
 import { useRouter } from 'vue-router'
 import { useGames } from '../composables/useGames'
 import { usePlayLog } from '../composables/usePlayLog'
@@ -87,6 +89,11 @@ watch(() => filters.value.tag, (newVal, oldVal) => {
 onMounted(() => {
   fetchGames()
   fetchTags()
+})
+
+onActivated(() => {
+  // Refresh data in background when returning to this view
+  fetchGames()
 })
 </script>
 

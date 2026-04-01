@@ -12,6 +12,7 @@ export interface AdminUser {
   playCount: number
   friendCount: number
   wishlistCount: number
+  features: string[]
 }
 
 export interface AdminUserListResponse {

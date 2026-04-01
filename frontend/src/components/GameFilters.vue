@@ -9,7 +9,7 @@ defineEmits<{ (e: 'clear'): void }>()
 
 defineProps<{ hasActiveFilters: boolean; tags: TagWithCount[] }>()
 
-const showMobileFilters = ref(false)
+const showFilters = ref(false)
 
 interface TriStateToggle {
   key: keyof Pick<GameFilters, 'isCardGame' | 'isCooperative' | 'playsInTeams' | 'supportsCampaign'>
@@ -47,47 +47,54 @@ function parseNumInput(e: Event): number | null {
   ;(e.target as HTMLInputElement).value = raw
   return raw ? Number(raw) : null
 }
-
-const inputClass = 'w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-center text-sm'
 </script>
 
 <template>
   <div>
-    <!-- Top row: search + filter toggle (mobile) -->
+    <!-- Top row: filter toggle + actions -->
     <div class="flex items-center gap-2">
-      <!-- Search -->
-      <div class="relative flex-1 lg:flex-none">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          v-model="filters.search"
-          type="text"
-          placeholder="Search games..."
-          class="w-full lg:w-48 h-9 pl-10 pr-4 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
-        />
-      </div>
-
-      <!-- Filter toggle button (mobile/tablet only) -->
+      <!-- Filter toggle button -->
       <button
-        class="lg:hidden flex-shrink-0 relative w-9 h-9 flex items-center justify-center rounded-lg border border-surface-lighter text-text-muted hover:text-text-primary hover:border-text-muted transition-colors"
+        class="flex-shrink-0 relative h-9 flex items-center gap-1.5 px-3 rounded-lg border border-surface-lighter text-text-muted hover:text-text-primary hover:border-text-muted transition-colors"
         title="Toggle filters"
-        @click="showMobileFilters = !showMobileFilters"
+        @click="showFilters = !showFilters"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
         </svg>
+        <span class="text-sm hidden sm:inline">Filters</span>
         <span
           v-if="hasActiveFilters"
           class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent"
         />
       </button>
 
-      <!-- Actions slot (e.g. Add button) — sits in the top row on mobile -->
-      <slot name="actions" />
+      <div class="flex-1" />
 
-      <!-- Desktop filters (inline, hidden on smaller screens) -->
-      <div class="hidden lg:flex items-center gap-3">
+      <!-- Actions slot (e.g. Add button) -->
+      <slot name="actions" />
+    </div>
+
+    <!-- Expanded filters panel -->
+    <div
+      v-if="showFilters"
+      class="mt-3 p-3 rounded-xl bg-surface border border-surface-lighter space-y-3"
+    >
+      <!-- Search -->
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          v-model="filters.search"
+          type="text"
+          placeholder="Filter by name..."
+          class="w-full h-9 pl-10 pr-4 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
+        />
+      </div>
+
+      <!-- Filters row -->
+      <div class="flex flex-wrap items-center gap-2">
         <!-- Players -->
         <div class="flex items-center gap-1.5">
           <label class="text-xs font-medium text-text-secondary uppercase tracking-wider">Players</label>
@@ -96,7 +103,7 @@ const inputClass = 'w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-su
             type="text"
             inputmode="numeric"
             placeholder="Any"
-            :class="inputClass"
+            class="w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm text-center"
             @input="filters.players = parseNumInput($event)"
           />
         </div>
@@ -109,9 +116,23 @@ const inputClass = 'w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-su
             type="text"
             inputmode="numeric"
             placeholder="Any"
-            :class="inputClass"
+            class="w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm text-center"
             @input="filters.duration = parseNumInput($event)"
           />
+        </div>
+
+        <!-- Tag -->
+        <div v-if="tags.length" class="flex items-center gap-1.5">
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wider">Tag</label>
+          <select
+            :value="filters.tag ?? ''"
+            class="h-9 px-2 pr-7 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary text-sm focus:outline-none focus:border-accent transition-colors appearance-none cursor-pointer"
+            style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;"
+            @change="filters.tag = Number(($event.target as HTMLSelectElement).value) || null"
+          >
+            <option value="">Any</option>
+            <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+          </select>
         </div>
 
         <!-- Tri-state toggles -->
@@ -128,20 +149,7 @@ const inputClass = 'w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-su
           {{ toggle.label }}
         </button>
 
-        <!-- Tag filter -->
-        <div v-if="tags.length" class="flex items-center gap-1.5">
-          <label class="text-xs font-medium text-text-secondary uppercase tracking-wider">Tag</label>
-          <select
-            :value="filters.tag ?? ''"
-            class="h-9 px-2 pr-7 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary text-sm focus:outline-none focus:border-accent transition-colors appearance-none cursor-pointer"
-            style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;"
-            @change="filters.tag = Number(($event.target as HTMLSelectElement).value) || null"
-          >
-            <option value="">Any</option>
-            <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
-          </select>
-        </div>
-
+        <!-- Clear -->
         <button
           v-if="hasActiveFilters"
           class="h-9 px-3 rounded-lg border border-surface-lighter text-text-muted text-sm hover:text-text-primary hover:border-text-muted transition-all cursor-pointer"
@@ -150,77 +158,6 @@ const inputClass = 'w-16 h-9 px-2 rounded-lg bg-surface-lighter border border-su
           Clear all
         </button>
       </div>
-    </div>
-
-    <!-- Mobile/tablet expanded filters -->
-    <div
-      v-if="showMobileFilters"
-      class="lg:hidden mt-3 p-3 rounded-xl bg-surface border border-surface-lighter space-y-3"
-    >
-      <!-- Players + Duration -->
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1">Players</label>
-          <input
-            :value="filters.players ?? ''"
-            type="text"
-            inputmode="numeric"
-            placeholder="Any"
-            class="w-full h-9 px-3 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
-            @input="filters.players = parseNumInput($event)"
-          />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1">Time</label>
-          <input
-            :value="filters.duration ?? ''"
-            type="text"
-            inputmode="numeric"
-            placeholder="Any"
-            class="w-full h-9 px-3 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
-            @input="filters.duration = parseNumInput($event)"
-          />
-        </div>
-      </div>
-
-      <!-- Tag -->
-      <div v-if="tags.length">
-        <label class="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-1">Tag</label>
-        <select
-          :value="filters.tag ?? ''"
-          class="w-full h-9 px-3 pr-7 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary text-sm focus:outline-none focus:border-accent transition-colors appearance-none cursor-pointer"
-          style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;"
-          @change="filters.tag = Number(($event.target as HTMLSelectElement).value) || null"
-        >
-          <option value="">Any</option>
-          <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
-        </select>
-      </div>
-
-      <!-- Tri-state toggles -->
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="toggle in toggles"
-          :key="toggle.key"
-          :class="[
-            'h-9 px-2.5 rounded-lg border text-sm font-medium transition-all cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5',
-            triStateClass(filters[toggle.key]),
-          ]"
-          @click="cycleTriState(toggle.key)"
-        >
-          <span v-if="filters[toggle.key] !== null" :class="['w-1.5 h-1.5 rounded-full shrink-0', triStateDot(filters[toggle.key])]" />
-          {{ toggle.label }}
-        </button>
-      </div>
-
-      <!-- Clear -->
-      <button
-        v-if="hasActiveFilters"
-        class="w-full h-9 rounded-lg border border-surface-lighter text-text-muted text-sm hover:text-text-primary hover:border-text-muted transition-all cursor-pointer"
-        @click="$emit('clear')"
-      >
-        Clear all
-      </button>
     </div>
   </div>
 </template>

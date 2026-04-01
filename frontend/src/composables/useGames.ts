@@ -4,13 +4,15 @@ import { type Game, type GameFilters, createDefaultFilters } from '../types/game
 export type SortOption = 'alpha' | 'added' | 'most-played' | 'duration'
 export type SortDir = 'asc' | 'desc'
 
+// Module-level state so games persist across view mounts (enables scroll restoration)
+const allGames = ref<Game[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+const filters = ref<GameFilters>(createDefaultFilters())
+const sort = ref<SortOption>('alpha')
+const sortDir = ref<SortDir>('asc')
+
 export function useGames() {
-  const allGames = ref<Game[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const filters = ref<GameFilters>(createDefaultFilters())
-  const sort = ref<SortOption>('alpha')
-  const sortDir = ref<SortDir>('asc')
 
   const fetchGames = async () => {
     loading.value = true

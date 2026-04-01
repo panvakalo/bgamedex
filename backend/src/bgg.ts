@@ -46,6 +46,35 @@ export function extractMechanics(xml: string): string[] {
   return mechanics
 }
 
+export function extractCategories(xml: string): string[] {
+  const categories: string[] = []
+  const regex = /<link type="boardgamecategory"[^>]*value="([^"]*)"/g
+  let match
+  while ((match = regex.exec(xml)) !== null) {
+    categories.push(decodeHtmlEntities(match[1]))
+  }
+  return categories
+}
+
+export interface GameClassification {
+  isCardGame: boolean
+  isCooperative: boolean
+  playsInTeams: boolean
+  supportsCampaign: boolean
+}
+
+export function classifyGame(categories: string[], mechanics: string[]): GameClassification {
+  const cats = new Set(categories.map((c) => c.toLowerCase()))
+  const mechs = new Set(mechanics.map((m) => m.toLowerCase()))
+
+  const isCardGame = cats.has('card game')
+  const isCooperative = mechs.has('cooperative game') || mechs.has('solo / solitaire game')
+  const playsInTeams = mechs.has('team-based game') || mechs.has('partnership')
+  const supportsCampaign = cats.has('campaign') || mechs.has('campaign / battle card driven') || mechs.has('legacy game') || mechs.has('scenario / mission / campaign game')
+
+  return { isCardGame, isCooperative, playsInTeams, supportsCampaign }
+}
+
 export function bggHeaders(): Record<string, string> {
   return BGG_TOKEN ? { Authorization: `Bearer ${BGG_TOKEN}` } : {}
 }
@@ -125,6 +154,7 @@ export interface BggThingResult {
   description: string | null
   imageUrl: string | null
   mechanics: string[]
+  categories: string[]
   minPlayers: number | null
   maxPlayers: number | null
   minPlaytime: number | null
@@ -152,7 +182,7 @@ export async function fetchBggThing(bggId: number, retries = 3): Promise<BggThin
         await delay(3000)
         continue
       }
-      if (!res.ok) return { name: null, description: null, imageUrl: null, mechanics: [], minPlayers: null, maxPlayers: null, minPlaytime: null, maxPlaytime: null }
+      if (!res.ok) return { name: null, description: null, imageUrl: null, mechanics: [], categories: [], minPlayers: null, maxPlayers: null, minPlaytime: null, maxPlaytime: null }
       const xml = await res.text()
 
       const imageUrl = extractXmlValue(xml, 'image')
@@ -170,6 +200,7 @@ export async function fetchBggThing(bggId: number, retries = 3): Promise<BggThin
       }
 
       const mechanics = extractMechanics(xml)
+      const categories = extractCategories(xml)
 
       const minPlayersStr = extractXmlAttribute(xml, 'minplayers', 'value')
       const maxPlayersStr = extractXmlAttribute(xml, 'maxplayers', 'value')
@@ -181,6 +212,7 @@ export async function fetchBggThing(bggId: number, retries = 3): Promise<BggThin
         description,
         imageUrl: imageUrl ?? null,
         mechanics,
+        categories,
         minPlayers: minPlayersStr ? parseInt(minPlayersStr, 10) : null,
         maxPlayers: maxPlayersStr ? parseInt(maxPlayersStr, 10) : null,
         minPlaytime: minPlaytimeStr ? parseInt(minPlaytimeStr, 10) : null,
@@ -191,10 +223,10 @@ export async function fetchBggThing(bggId: number, retries = 3): Promise<BggThin
         await delay(2000)
         continue
       }
-      return { name: null, description: null, imageUrl: null, mechanics: [], minPlayers: null, maxPlayers: null, minPlaytime: null, maxPlaytime: null }
+      return { name: null, description: null, imageUrl: null, mechanics: [], categories: [], minPlayers: null, maxPlayers: null, minPlaytime: null, maxPlaytime: null }
     }
   }
-  return { name: null, description: null, imageUrl: null, mechanics: [], minPlayers: null, maxPlayers: null, minPlaytime: null, maxPlaytime: null }
+  return { name: null, description: null, imageUrl: null, mechanics: [], categories: [], minPlayers: null, maxPlayers: null, minPlaytime: null, maxPlaytime: null }
 }
 
 export interface BggRulesFile {

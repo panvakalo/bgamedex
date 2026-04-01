@@ -156,7 +156,7 @@ onMounted(fetchWishlist)
           <input
             v-model="search"
             type="text"
-            placeholder="Search wishlist..."
+            placeholder="Filter by name..."
             class="w-full lg:w-48 h-9 pl-10 pr-4 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
           />
         </div>

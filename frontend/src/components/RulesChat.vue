@@ -125,7 +125,7 @@ const renderedMessages = computed(() =>
 
     <!-- Disabled state -->
     <div v-if="!hasRules" class="px-4 py-8 text-center">
-      <p class="text-sm text-text-muted">No rules or description available for this game.</p>
+      <p class="text-sm text-text-muted">No rules available. Upload a rules PDF to chat with the AI assistant.</p>
     </div>
 
     <!-- Preparing rules -->

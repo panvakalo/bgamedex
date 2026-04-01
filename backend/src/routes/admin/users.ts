@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 
-import { getDb } from '../../database.js'
+import { getDb, KNOWN_FEATURES } from '../../database.js'
 
 const router = Router()
 
@@ -24,7 +24,11 @@ interface UserRow {
   game_count: number; play_count: number; friend_count: number; wishlist_count: number
 }
 
-function toUserDto(u: UserRow) {
+function getUserFeatures(db: ReturnType<typeof getDb>, userId: number): string[] {
+  return (db.prepare('SELECT feature FROM user_features WHERE user_id = ?').all(userId) as { feature: string }[]).map(r => r.feature)
+}
+
+function toUserDto(u: UserRow, features: string[] = []) {
   return {
     id: u.id,
     email: u.email,
@@ -39,6 +43,7 @@ function toUserDto(u: UserRow) {
     playCount: u.play_count,
     friendCount: u.friend_count,
     wishlistCount: u.wishlist_count,
+    features,
   }
 }
 
@@ -73,7 +78,7 @@ router.get('/', (req: Request, res: Response) => {
   `).all(...params, limit, offset) as UserRow[]
 
   res.json({
-    users: users.map(toUserDto),
+    users: users.map(u => toUserDto(u, getUserFeatures(db, u.id))),
     total: countRow.total,
     page,
     pageSize: limit,
@@ -96,7 +101,7 @@ router.get('/:id', (req: Request, res: Response) => {
     return
   }
 
-  res.json(toUserDto(user))
+  res.json(toUserDto(user, getUserFeatures(db, user.id)))
 })
 
 router.patch('/:id', (req: Request, res: Response) => {
@@ -127,6 +132,50 @@ router.patch('/:id', (req: Request, res: Response) => {
 
   db.prepare('UPDATE users SET is_admin = ?, token_version = token_version + 1 WHERE id = ?').run(isAdmin ? 1 : 0, id)
   res.json({ message: isAdmin ? 'User promoted to admin' : 'Admin privileges removed' })
+})
+
+router.post('/:id/features', (req: Request, res: Response) => {
+  const db = getDb()
+  const id = parseInt(req.params.id as string)
+  const { feature } = req.body as { feature?: string }
+
+  if (isNaN(id)) {
+    res.status(400).json({ error: 'Invalid user ID' })
+    return
+  }
+
+  if (!feature || !KNOWN_FEATURES.includes(feature as typeof KNOWN_FEATURES[number])) {
+    res.status(400).json({ error: `Invalid feature. Must be one of: ${KNOWN_FEATURES.join(', ')}` })
+    return
+  }
+
+  const existing = db.prepare('SELECT id FROM users WHERE id = ?').get(id) as { id: number } | undefined
+  if (!existing) {
+    res.status(404).json({ error: 'User not found' })
+    return
+  }
+
+  db.prepare('INSERT OR IGNORE INTO user_features (user_id, feature) VALUES (?, ?)').run(id, feature)
+  res.json({ features: getUserFeatures(db, id) })
+})
+
+router.delete('/:id/features/:feature', (req: Request, res: Response) => {
+  const db = getDb()
+  const id = parseInt(req.params.id as string)
+  const { feature } = req.params
+
+  if (isNaN(id)) {
+    res.status(400).json({ error: 'Invalid user ID' })
+    return
+  }
+
+  if (!KNOWN_FEATURES.includes(feature as typeof KNOWN_FEATURES[number])) {
+    res.status(400).json({ error: `Invalid feature. Must be one of: ${KNOWN_FEATURES.join(', ')}` })
+    return
+  }
+
+  db.prepare('DELETE FROM user_features WHERE user_id = ? AND feature = ?').run(id, feature)
+  res.json({ features: getUserFeatures(db, id) })
 })
 
 export default router

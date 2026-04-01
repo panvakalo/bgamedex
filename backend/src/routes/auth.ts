@@ -158,7 +158,9 @@ router.post('/exchange-code', (req: Request, res: Response) => {
 
   const decoded = verifyToken(entry.jwt)
   setAuthCookie(res, entry.jwt)
-  res.json({ user: { sub: decoded.sub, email: decoded.email, name: decoded.name, picture: '', emailVerified: decoded.emailVerified } })
+  const db = getDb()
+  const features = (db.prepare('SELECT feature FROM user_features WHERE user_id = ?').all(decoded.sub) as { feature: string }[]).map(r => r.feature)
+  res.json({ user: { sub: decoded.sub, email: decoded.email, name: decoded.name, picture: '', emailVerified: decoded.emailVerified, features } })
 })
 
 const MIN_PASSWORD_LENGTH = 12
@@ -249,14 +251,16 @@ router.post('/login', async (req: Request, res: Response) => {
     aud: 'user',
   })
 
+  const features = (db.prepare('SELECT feature FROM user_features WHERE user_id = ?').all(user.id) as { feature: string }[]).map(r => r.feature)
   setAuthCookie(res, token)
-  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: user.picture ?? '', emailVerified: !!user.email_verified } })
+  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: user.picture ?? '', emailVerified: !!user.email_verified, features } })
 })
 
 router.get('/me', requireAuth, (req: Request, res: Response) => {
   const db = getDb()
   const row = db.prepare('SELECT picture, email_verified FROM users WHERE id = ?').get(req.user!.sub) as { picture: string | null; email_verified: number } | undefined
-  res.json({ ...req.user, picture: row?.picture ?? '', emailVerified: !!row?.email_verified })
+  const features = (db.prepare('SELECT feature FROM user_features WHERE user_id = ?').all(req.user!.sub) as { feature: string }[]).map(r => r.feature)
+  res.json({ ...req.user, picture: row?.picture ?? '', emailVerified: !!row?.email_verified, features })
 })
 
 router.post('/logout', requireAuth, (req: Request, res: Response) => {
@@ -306,8 +310,9 @@ router.post('/verify-email', (req: Request, res: Response) => {
     aud: 'user',
   })
 
+  const featureRows = (db.prepare('SELECT feature FROM user_features WHERE user_id = ?').all(user.id) as { feature: string }[]).map(r => r.feature)
   setAuthCookie(res, token)
-  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: '', emailVerified: true } })
+  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: '', emailVerified: true, features: featureRows } })
 })
 
 router.post('/resend-verification', requireAuth, (req: Request, res: Response) => {
@@ -421,8 +426,9 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     aud: 'user',
   })
 
+  const resetFeatures = (db.prepare('SELECT feature FROM user_features WHERE user_id = ?').all(user.id) as { feature: string }[]).map(r => r.feature)
   setAuthCookie(res, token)
-  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: '', emailVerified: true } })
+  res.json({ user: { sub: user.id, email: user.email, name: user.name, picture: '', emailVerified: true, features: resetFeatures } })
 })
 
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']

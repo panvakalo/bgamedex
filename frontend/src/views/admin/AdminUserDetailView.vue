@@ -24,6 +24,31 @@ const toggleError = ref('')
 const toggleLoading = ref(false)
 
 const isSelf = computed(() => user.value && currentAdmin.value && user.value.id === currentAdmin.value.sub)
+const featureLoading = ref<string | null>(null)
+
+const KNOWN_FEATURES = [
+  { key: 'rules_access', label: 'Rules Access', description: 'AI rules chat, search, and PDF upload' },
+] as const
+
+async function toggleFeature(feature: string, enabled: boolean) {
+  if (!user.value) return
+  featureLoading.value = feature
+  try {
+    const result = enabled
+      ? await adminFetch<{ features: string[] }>(`/api/admin/users/${user.value.id}/features`, {
+          method: 'POST',
+          body: JSON.stringify({ feature }),
+        })
+      : await adminFetch<{ features: string[] }>(`/api/admin/users/${user.value.id}/features/${feature}`, {
+          method: 'DELETE',
+        })
+    user.value = { ...user.value, features: result.features }
+  } catch (e) {
+    toggleError.value = e instanceof Error ? e.message : 'Failed to update feature'
+  } finally {
+    featureLoading.value = null
+  }
+}
 
 onMounted(async () => {
   try {
@@ -160,6 +185,34 @@ const formatDate = formatLongDate
             {{ toggleLoading ? 'Updating...' : user.isAdmin ? 'Remove Admin' : 'Make Admin' }}
           </button>
         </template>
+      </section>
+
+      <!-- Feature Access -->
+      <section class="rounded-xl border border-surface-lighter p-5 mt-6" style="box-shadow: var(--shadow-card)">
+        <h2 class="text-lg font-semibold text-text-primary mb-4">Feature Access</h2>
+        <div class="space-y-3">
+          <div
+            v-for="feat in KNOWN_FEATURES"
+            :key="feat.key"
+            class="flex items-center justify-between"
+          >
+            <div>
+              <span class="text-sm font-medium text-text-primary">{{ feat.label }}</span>
+              <p class="text-xs text-text-muted">{{ feat.description }}</p>
+            </div>
+            <button
+              :disabled="featureLoading === feat.key"
+              class="relative w-11 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/50"
+              :class="user.features.includes(feat.key) ? 'bg-accent' : 'bg-surface-lighter'"
+              @click="toggleFeature(feat.key, !user.features.includes(feat.key))"
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform"
+                :class="user.features.includes(feat.key) ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+          </div>
+        </div>
       </section>
     </template>
   </main>

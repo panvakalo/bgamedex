@@ -299,7 +299,11 @@ function isActive(item: typeof navItems[number]): boolean {
 
     <!-- Main content area -->
     <div :class="isAuthenticated && user && !isAdminRoute ? 'md:ml-16' : ''">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <KeepAlive include="HomeView">
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
     </div>
 
     <NotificationList />

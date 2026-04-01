@@ -50,11 +50,11 @@ function formatDuration(min: number | null, max: number | null): string {
 </script>
 
 <template>
-  <div v-if="loading" class="flex items-center justify-center py-20">
+  <div v-if="loading && games.length === 0" class="flex items-center justify-center py-20">
     <div class="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
   </div>
 
-  <div v-else-if="games.length === 0" class="text-center py-20">
+  <div v-else-if="!loading && games.length === 0" class="text-center py-20">
     <p class="text-text-muted text-lg">No games match your filters</p>
     <p class="text-text-muted/60 text-sm mt-1">Try adjusting your criteria</p>
   </div>

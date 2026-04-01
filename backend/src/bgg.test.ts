@@ -1,4 +1,4 @@
-import { decodeHtmlEntities, extractXmlValue, extractXmlAttribute, extractMechanics, searchBggMultiple, delay } from './bgg.js'
+import { decodeHtmlEntities, extractXmlValue, extractXmlAttribute, extractMechanics, extractCategories, classifyGame, searchBggMultiple, delay } from './bgg.js'
 
 describe('decodeHtmlEntities', () => {
   it('should decode basic HTML entities', () => {
@@ -84,6 +84,88 @@ describe('extractMechanics', () => {
     const xml = '<link type="boardgamemechanic" id="1" value="Pick-up &amp; Deliver"/>'
     const result = extractMechanics(xml)
     expect(result).toEqual(['Pick-up & Deliver'])
+  })
+})
+
+describe('extractCategories', () => {
+  it('should extract category values from XML', () => {
+    const xml = `
+      <link type="boardgamecategory" id="1" value="Card Game"/>
+      <link type="boardgamecategory" id="2" value="Strategy"/>
+      <link type="boardgamemechanic" id="3" value="Dice Rolling"/>
+    `
+    const result = extractCategories(xml)
+    expect(result).toEqual(['Card Game', 'Strategy'])
+  })
+
+  it('should return an empty array when no categories exist', () => {
+    const xml = '<link type="boardgamemechanic" id="1" value="Dice Rolling"/>'
+    expect(extractCategories(xml)).toEqual([])
+  })
+
+  it('should decode HTML entities in category names', () => {
+    const xml = '<link type="boardgamecategory" id="1" value="Science Fiction &amp; Fantasy"/>'
+    expect(extractCategories(xml)).toEqual(['Science Fiction & Fantasy'])
+  })
+})
+
+describe('classifyGame', () => {
+  it('should detect card games from categories', () => {
+    const result = classifyGame(['Card Game', 'Strategy'], [])
+    expect(result.isCardGame).toBe(true)
+    expect(result.isCooperative).toBe(false)
+  })
+
+  it('should detect cooperative games from mechanics', () => {
+    const result = classifyGame([], ['Cooperative Game', 'Hand Management'])
+    expect(result.isCooperative).toBe(true)
+    expect(result.isCardGame).toBe(false)
+  })
+
+  it('should detect solo games as cooperative', () => {
+    const result = classifyGame([], ['Solo / Solitaire Game'])
+    expect(result.isCooperative).toBe(true)
+  })
+
+  it('should detect team-based games from mechanics', () => {
+    const result = classifyGame([], ['Team-Based Game'])
+    expect(result.playsInTeams).toBe(true)
+  })
+
+  it('should detect partnership games as team-based', () => {
+    const result = classifyGame([], ['Partnership'])
+    expect(result.playsInTeams).toBe(true)
+  })
+
+  it('should detect campaign support from mechanics', () => {
+    const result = classifyGame([], ['Legacy Game'])
+    expect(result.supportsCampaign).toBe(true)
+  })
+
+  it('should detect campaign from campaign/battle card driven mechanic', () => {
+    const result = classifyGame([], ['Campaign / Battle Card Driven'])
+    expect(result.supportsCampaign).toBe(true)
+  })
+
+  it('should detect campaign from scenario/mission/campaign mechanic', () => {
+    const result = classifyGame([], ['Scenario / Mission / Campaign Game'])
+    expect(result.supportsCampaign).toBe(true)
+  })
+
+  it('should be case-insensitive', () => {
+    const result = classifyGame(['card game'], ['cooperative game'])
+    expect(result.isCardGame).toBe(true)
+    expect(result.isCooperative).toBe(true)
+  })
+
+  it('should return all false when no matching categories or mechanics', () => {
+    const result = classifyGame(['Adventure'], ['Dice Rolling'])
+    expect(result).toEqual({
+      isCardGame: false,
+      isCooperative: false,
+      playsInTeams: false,
+      supportsCampaign: false,
+    })
   })
 })
 

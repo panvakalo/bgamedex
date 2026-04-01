@@ -168,12 +168,19 @@ const formatDate = formatShortDate
         </template>
 
         <template #cell-badges="{ row }">
-          <AdminUserBadges
-            :is-admin="row.isAdmin"
-            :google-id="row.googleId"
-            :has-password="row.hasPassword"
-            :email-verified="row.emailVerified"
-          />
+          <div class="flex items-center gap-1.5">
+            <AdminUserBadges
+              :is-admin="row.isAdmin"
+              :google-id="row.googleId"
+              :has-password="row.hasPassword"
+              :email-verified="row.emailVerified"
+            />
+            <span
+              v-if="row.features?.includes('rules_access')"
+              class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/15 text-purple-400"
+              title="Rules Access"
+            >Rules</span>
+          </div>
         </template>
       </AdminDataTable>
 

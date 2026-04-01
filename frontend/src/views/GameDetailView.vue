@@ -9,9 +9,12 @@ import RulesChat from '../components/RulesChat.vue'
 import DatePicker from '../components/DatePicker.vue'
 import TagEditor from '../components/TagEditor.vue'
 import { useTags } from '../composables/useTags'
+import { useAuth } from '../composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
+const { hasFeature } = useAuth()
+const canAccessRules = hasFeature('rules_access')
 const game = ref<GameDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -175,7 +178,7 @@ onMounted(async () => {
     game.value = await res.json()
     fetchPlays(game.value!.id)
     fetchTags()
-    if (game.value!.rules_url || game.value!.description || game.value!.bgg_id) {
+    if (canAccessRules && (game.value!.rules_url || game.value!.bgg_id)) {
       prepareRules()
     } else {
       rulesReady.value = true
@@ -192,12 +195,12 @@ onMounted(async () => {
 <template>
   <main class="max-w-4xl mx-auto px-4 py-6">
     <!-- Back link -->
-    <RouterLink to="/" class="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent-light transition-colors mb-6">
+    <button @click="router.back()" class="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent-light transition-colors mb-6">
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
       Back to games
-    </RouterLink>
+    </button>
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-20">
@@ -264,7 +267,7 @@ onMounted(async () => {
           </div>
 
           <!-- Rules buttons -->
-          <div class="flex items-center gap-3">
+          <div v-if="canAccessRules" class="flex items-center gap-3">
             <a
               v-if="game.rules_url"
               :href="game.rules_url"
@@ -381,9 +384,10 @@ onMounted(async () => {
 
       <!-- Rules Chat -->
       <RulesChat
+        v-if="canAccessRules"
         :game-id="game.id"
         :game-title="game.title"
-        :has-rules="!!game.rules_url || !!game.description || rulesSource === 'uploaded'"
+        :has-rules="rulesSource !== null && rulesSource !== 'unavailable'"
         :preparing="preparingRules"
         :rules-source="rulesSource"
       />

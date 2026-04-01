@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import OpenAI from 'openai'
 import multer from 'multer'
 import { getDb } from '../database.js'
-import { searchBggMultiple, fetchBggThing, fetchBggThumbnail, fetchBggRulesFiles } from '../bgg.js'
+import { searchBggMultiple, fetchBggThing, fetchBggThumbnail, fetchBggRulesFiles, classifyGame } from '../bgg.js'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -113,15 +113,21 @@ router.post('/', async (req: Request, res: Response) => {
     const rulesFiles = await fetchBggRulesFiles(bggId)
     const rulesUrl = rulesFiles.length > 0 ? rulesFiles[0].filepageUrl : null
 
+    const classification = classifyGame(bggData.categories, bggData.mechanics)
+
     const result = db.prepare(`
       INSERT INTO games (title, min_players, max_players, min_duration, max_duration, is_card_game, is_cooperative, plays_in_teams, supports_campaign, description, image_url, bgg_id, rules_url, rules_files, user_id, status)
-      VALUES (@title, @minPlayers, @maxPlayers, @minDuration, @maxDuration, 0, 0, 0, 0, @description, @imageUrl, @bggId, @rulesUrl, @rulesFiles, @userId, @status)
+      VALUES (@title, @minPlayers, @maxPlayers, @minDuration, @maxDuration, @isCardGame, @isCooperative, @playsInTeams, @supportsCampaign, @description, @imageUrl, @bggId, @rulesUrl, @rulesFiles, @userId, @status)
     `).run({
       title: bggData.name ?? `Game ${bggId}`,
       minPlayers: bggData.minPlayers,
       maxPlayers: bggData.maxPlayers,
       minDuration: bggData.minPlaytime,
       maxDuration: bggData.maxPlaytime,
+      isCardGame: classification.isCardGame ? 1 : 0,
+      isCooperative: classification.isCooperative ? 1 : 0,
+      playsInTeams: classification.playsInTeams ? 1 : 0,
+      supportsCampaign: classification.supportsCampaign ? 1 : 0,
       description: bggData.description,
       imageUrl: bggData.imageUrl,
       bggId,

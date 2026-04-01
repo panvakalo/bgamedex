@@ -154,6 +154,10 @@ ${sample}`,
   }
 }
 
+function hasRulesAccess(db: ReturnType<typeof getDb>, userId: number): boolean {
+  return !!db.prepare('SELECT 1 FROM user_features WHERE user_id = ? AND feature = ?').get(userId, 'rules_access')
+}
+
 router.post('/:id/upload-rules', (req: Request, res: Response, next) => {
   upload.single('pdf')(req, res, (err) => {
     if (err) {
@@ -166,6 +170,11 @@ router.post('/:id/upload-rules', (req: Request, res: Response, next) => {
   const db = getDb()
   const gameId = Number(req.params.id)
   const userId = req.user!.sub
+
+  if (!hasRulesAccess(db, userId)) {
+    res.status(403).json({ error: 'Rules access not enabled' })
+    return
+  }
 
   if (!req.file) {
     res.status(400).json({ error: 'A PDF file is required' })
@@ -264,8 +273,12 @@ router.post('/:id/upload-rules', (req: Request, res: Response, next) => {
 router.post('/:id/prepare-rules', async (req: Request, res: Response) => {
   const db = getDb()
   const gameId = Number(req.params.id)
-
   const userId = req.user!.sub
+
+  if (!hasRulesAccess(db, userId)) {
+    res.status(403).json({ error: 'Rules access not enabled' })
+    return
+  }
   const game = db.prepare('SELECT id, title, rules_url, rules_text, rules_files, description, bgg_id FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as GameRow | undefined
 
   if (!game) {
@@ -318,6 +331,13 @@ router.post('/:id/prepare-rules', async (req: Request, res: Response) => {
 router.post('/:id/chat', async (req: Request, res: Response) => {
   const db = getDb()
   const gameId = Number(req.params.id)
+  const userId = req.user!.sub
+
+  if (!hasRulesAccess(db, userId)) {
+    res.status(403).json({ error: 'Rules access not enabled' })
+    return
+  }
+
   const { messages } = req.body as { messages: ChatMessage[] }
 
   // Input validation
@@ -342,7 +362,6 @@ router.post('/:id/chat', async (req: Request, res: Response) => {
     }
   }
 
-  const userId = req.user!.sub
   const game = db.prepare('SELECT id, title, rules_text, description, bgg_id FROM games WHERE id = ? AND user_id = ?').get(gameId, userId) as {
     id: number
     title: string
