@@ -22,6 +22,8 @@ const loading = ref(true)
 const loadError = ref('')
 const toggleError = ref('')
 const toggleLoading = ref(false)
+const deleteLoading = ref(false)
+const deleteError = ref('')
 
 const isSelf = computed(() => user.value && currentAdmin.value && user.value.id === currentAdmin.value.sub)
 const featureLoading = ref<string | null>(null)
@@ -83,6 +85,28 @@ async function toggleAdmin() {
     toggleError.value = e instanceof Error ? e.message : 'Failed to update user'
   } finally {
     toggleLoading.value = false
+  }
+}
+
+async function deleteUser() {
+  if (!user.value || isSelf.value) return
+
+  const confirmed = await confirmDestructive({
+    title: 'Delete User?',
+    message: `This will permanently delete ${user.value.name}'s account and all their data (${user.value.gameCount} games, ${user.value.playCount} plays). This cannot be undone.`,
+    confirmLabel: 'Delete User',
+  })
+  if (!confirmed) return
+
+  deleteLoading.value = true
+  deleteError.value = ''
+  try {
+    await adminFetch(`/api/admin/users/${user.value.id}`, { method: 'DELETE' })
+    router.replace('/admin/users')
+  } catch (e) {
+    deleteError.value = e instanceof Error ? e.message : 'Failed to delete user'
+  } finally {
+    deleteLoading.value = false
   }
 }
 
@@ -213,6 +237,36 @@ const formatDate = formatLongDate
             </button>
           </div>
         </div>
+      </section>
+
+      <!-- Delete User -->
+      <section class="rounded-xl border border-red-500/20 p-5 mt-6">
+        <h2 class="text-lg font-semibold text-text-primary mb-2">Danger Zone</h2>
+
+        <div v-if="isSelf" class="text-sm text-text-muted">
+          You cannot delete your own account.
+        </div>
+
+        <template v-else>
+          <div
+            v-if="deleteError"
+            class="mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+          >
+            {{ deleteError }}
+          </div>
+
+          <p class="text-sm text-text-secondary mb-4">
+            Permanently delete this user and all their data. This action cannot be undone.
+          </p>
+
+          <button
+            :disabled="deleteLoading"
+            class="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+            @click="deleteUser"
+          >
+            {{ deleteLoading ? 'Deleting...' : 'Delete User' }}
+          </button>
+        </template>
       </section>
     </template>
   </main>
