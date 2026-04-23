@@ -15,6 +15,7 @@ import playsRouter, { statsRouter } from './routes/plays.js'
 import tagsRouter from './routes/tags.js'
 import pricesRouter from './routes/prices.js'
 import friendsRouter from './routes/friends.js'
+import videosRouter from './routes/videos.js'
 import adminAuthRouter from './routes/admin/auth.js'
 import adminUsersRouter from './routes/admin/users.js'
 import adminAnalyticsRouter from './routes/admin/analytics.js'
@@ -54,6 +55,7 @@ app.use(helmet({
       connectSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       styleSrcAttr: ["'unsafe-inline'"],
+      frameSrc: ['https://www.youtube.com', 'https://www.youtube-nocookie.com'],
       frameAncestors: ["'none'"],
     },
   },
@@ -152,6 +154,7 @@ app.use('/api/tags', requireAuth, tagsRouter)
 app.use('/api', requireAuth, statsRouter)
 app.use('/api/prices', requireAuth, expensiveLimiter, pricesRouter)
 app.use('/api/friends', requireAuth, friendsRouter)
+app.use('/api/games', requireAuth, videosRouter)
 
 // SSE endpoint for real-time notifications
 app.get('/api/events', requireAuth, (req, res) => {
@@ -192,6 +195,9 @@ if (!process.env.RESEND_API_KEY) {
 }
 if (!process.env.OPENAI_API_KEY) {
   console.warn('WARNING: OPENAI_API_KEY not set — rules chat will not be available')
+}
+if (!process.env.YOUTUBE_API_KEY) {
+  console.warn('WARNING: YOUTUBE_API_KEY not set — how-to-play videos will not be shown')
 }
 
 app.listen(Number(PORT), '0.0.0.0', () => {

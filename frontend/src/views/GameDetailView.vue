@@ -6,6 +6,7 @@ import { usePlayLog } from '../composables/usePlayLog'
 import { useNotify } from '../composables/useNotify'
 import { useDestructiveDialog } from '../composables/useDestructiveDialog'
 import RulesChat from '../components/RulesChat.vue'
+import YouTubeVideos from '../components/YouTubeVideos.vue'
 import DatePicker from '../components/DatePicker.vue'
 import TagEditor from '../components/TagEditor.vue'
 import { useTags } from '../composables/useTags'
@@ -357,6 +358,9 @@ onMounted(async () => {
         <h2 class="text-lg font-semibold text-text-primary mb-3">About</h2>
         <p class="text-text-secondary leading-relaxed whitespace-pre-line">{{ game.description }}</p>
       </div>
+
+      <!-- How to Play Videos -->
+      <YouTubeVideos :game-id="game.id" />
 
       <!-- Play History -->
       <div v-if="plays.length" class="mb-8">

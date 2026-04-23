@@ -204,6 +204,14 @@ function initSchema(db: Database.Database): void {
     )
   `)
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS youtube_videos (
+      game_title TEXT PRIMARY KEY,
+      videos TEXT NOT NULL,
+      fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `)
+
   // Track which one-time data migrations have run
   db.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, ran_at TEXT NOT NULL DEFAULT (datetime(\'now\')))')
 
