@@ -9,7 +9,7 @@ import { storeRulesChunks, searchRulesChunks } from '../rules-chunker.js'
 
 const MAX_MESSAGES = 50
 const MAX_MESSAGE_LENGTH = 5000
-const MAX_EXTRACTED_TEXT_LENGTH = 200_000
+const MAX_EXTRACTED_TEXT_LENGTH = 500_000
 const UPLOAD_RATE_LIMIT = 3
 const UPLOAD_RATE_WINDOW_MS = 60 * 60 * 1000
 const UPLOAD_COOLDOWN_MS = 60 * 60 * 1000
