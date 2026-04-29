@@ -100,15 +100,12 @@ async function handleSubmit() {
 
 <template>
   <main class="flex items-center justify-center min-h-screen relative overflow-hidden">
-    <!-- Ambient background shapes -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.04]" style="background: radial-gradient(circle, var(--theme-accent) 0%, transparent 70%)" />
-      <div class="absolute -bottom-48 -left-24 w-[500px] h-[500px] rounded-full opacity-[0.03]" style="background: radial-gradient(circle, var(--theme-accent2) 0%, transparent 70%)" />
-    </div>
+    <!-- 8-bit background pattern -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.04]" style="background-image: repeating-linear-gradient(0deg, var(--theme-accent) 0px, var(--theme-accent) 2px, transparent 2px, transparent 16px), repeating-linear-gradient(90deg, var(--theme-accent) 0px, var(--theme-accent) 2px, transparent 2px, transparent 16px)" />
 
     <div class="relative w-full max-w-sm mx-4 animate-fade-up">
       <div class="text-center mb-10">
-        <img :src="logoUrl" alt="Bgamedex" class="h-28 mx-auto mb-4 drop-shadow-md animate-float" />
+        <img :src="logoUrl" alt="Bgamedex" class="h-28 mx-auto mb-4 animate-float" />
         <h1 class="text-4xl font-extrabold text-text-primary mb-1.5 font-display tracking-tight">
           <span class="text-accent-light">Bgame</span>dex
         </h1>
@@ -227,7 +224,8 @@ async function handleSubmit() {
 
       <!-- Google button -->
       <button
-        class="w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] transition-all shadow-sm hover:shadow-md border border-gray-100"
+        class="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] border-4 border-gray-800"
+        style="box-shadow: 4px 4px 0px #181820"
         @click="login"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">

@@ -226,8 +226,8 @@ onMounted(fetchWishlist)
                   <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <!-- Gradient overlay -->
-              <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+              <!-- Dark overlay -->
+              <div v-if="game.image_url" class="absolute bottom-0 left-0 right-0 h-6 bg-black/40 pointer-events-none" />
             </div>
 
             <h3 class="text-sm sm:text-lg font-semibold text-text-primary leading-tight line-clamp-2 mb-2 sm:mb-3">{{ game.title }}</h3>

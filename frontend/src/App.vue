@@ -100,7 +100,7 @@ function isActive(item: typeof navItems[number]): boolean {
     >
       <!-- Logo -->
       <RouterLink to="/" class="flex items-center justify-center h-16 hover:opacity-80 transition-opacity">
-        <img :src="logoUrl" alt="Bgamedex" class="max-h-10 max-w-12 object-contain drop-shadow-sm" />
+        <img :src="logoUrl" alt="Bgamedex" class="max-h-10 max-w-12 object-contain" />
       </RouterLink>
 
       <!-- Nav items -->
@@ -179,11 +179,11 @@ function isActive(item: typeof navItems[number]): boolean {
     <!-- Mobile top bar -->
     <header
       v-if="isAuthenticated && user && !isAdminRoute"
-      class="sticky top-0 z-20 md:hidden bg-surface/80 backdrop-blur-md border-b border-surface-lighter"
+      class="sticky top-0 z-20 md:hidden bg-surface border-b-4 border-text-primary"
     >
       <div class="flex items-center justify-between px-4 py-3">
         <RouterLink to="/" class="flex items-center gap-2">
-          <img :src="logoUrl" alt="Bgamedex" class="h-8 drop-shadow-sm" />
+          <img :src="logoUrl" alt="Bgamedex" class="h-8" />
           <span class="text-xl font-bold text-text-primary tracking-tight font-display"><span class="text-accent-light">Bgame</span>dex</span>
         </RouterLink>
         <button

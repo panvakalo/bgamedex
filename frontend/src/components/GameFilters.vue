@@ -143,7 +143,7 @@ function parseNumInput(e: Event): number | null {
             'h-9 px-2.5 rounded-lg border text-sm font-medium transition-all cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5',
             triStateClass(filters[toggle.key]),
           ]"
-          :style="filters[toggle.key] === true ? { background: 'linear-gradient(135deg, rgba(22,163,74,0.15), rgba(22,163,74,0.25))' } : undefined"
+          :style="filters[toggle.key] === true ? { background: 'rgba(22,163,74,0.25)' } : undefined"
           @click="cycleTriState(toggle.key)"
         >
           <span v-if="filters[toggle.key] !== null" :class="['w-1.5 h-1.5 rounded-full shrink-0', triStateDot(filters[toggle.key]), filters[toggle.key] !== null && 'animate-dot-pulse']" />

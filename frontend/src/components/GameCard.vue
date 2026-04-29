@@ -28,15 +28,15 @@ function formatPlayers(min: number | null, max: number | null): string {
     v-bind="props.readonly ? {} : { to: '/games/' + game.id }"
     class="card-tactile group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-0 overflow-hidden relative no-underline"
   >
-    <!-- Inner glow overlay -->
-    <div class="absolute inset-0 rounded-2xl pointer-events-none z-10" style="background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 40%, rgba(0,0,0,0.02) 100%)" />
+    <!-- Inner highlight overlay -->
+    <div class="absolute inset-0 pointer-events-none z-10" style="border-top: 2px solid rgba(255,255,255,0.2); border-left: 2px solid rgba(255,255,255,0.2); border-bottom: 2px solid rgba(0,0,0,0.15); border-right: 2px solid rgba(0,0,0,0.15)" />
 
     <!-- Image -->
     <div class="relative overflow-hidden">
       <img v-if="game.image_url" :src="game.image_url" :alt="game.title" :class="['w-full object-cover transition-transform duration-500 group-hover:scale-110', featured ? 'aspect-[16/10]' : 'aspect-[3/4]']" />
       <div v-else :class="['w-full bg-surface-lighter', featured ? 'aspect-[16/10]' : 'aspect-[3/4]']" />
-      <!-- Gradient overlay -->
-      <div v-if="game.image_url" class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+      <!-- Dark overlay at bottom -->
+      <div v-if="game.image_url" class="absolute bottom-0 left-0 right-0 h-8 bg-black/50 pointer-events-none" />
       <!-- Play count overlay -->
       <div
         v-if="game.play_count > 0"
@@ -51,7 +51,7 @@ function formatPlayers(min: number | null, max: number | null): string {
       <!-- AI Rules badge -->
       <div
         v-if="game.rules_url && hasFeature('rules_access')"
-        class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold tracking-wide uppercase text-white bg-gradient-to-r from-accent to-purple-500 shadow-lg shadow-accent/30"
+        class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-1 text-[8px] font-semibold tracking-wide uppercase text-white bg-accent border-2 border-white"
       >
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
