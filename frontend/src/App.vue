@@ -12,6 +12,7 @@ import NotificationList from './components/NotificationList.vue'
 import logoUrl from './assets/img/BGamedex-logo.png'
 import Fireworks from './components/Fireworks.vue'
 import DestructiveDialog from './components/DestructiveDialog.vue'
+import PixelDragon from './components/PixelDragon.vue'
 
 const auth = useAuth()
 const route = useRoute()
@@ -339,6 +340,7 @@ function isActive(item: typeof navItems[number]): boolean {
       </RouterView>
     </div>
 
+    <PixelDragon />
     <NotificationList />
     <Fireworks v-if="fireworksActive" @done="fireworksDone" />
     <DestructiveDialog
