@@ -224,7 +224,8 @@ async function handleSubmit() {
 
       <!-- Google button -->
       <button
-        class="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] border-4 border-gray-800"
+        class="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 font-medium hover:bg-gray-50 active:scale-[0.97] border-2 border-gray-800"
+        style="box-shadow: inset 2px 2px 0 0 #f8f8f8, inset -2px -2px 0 0 #c0c0c0"
         @click="login"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">

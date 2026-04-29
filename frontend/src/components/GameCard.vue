@@ -28,8 +28,6 @@ function formatPlayers(min: number | null, max: number | null): string {
     v-bind="props.readonly ? {} : { to: '/games/' + game.id }"
     class="card-tactile group flex flex-col rounded-2xl bg-surface-light border border-surface-lighter p-0 overflow-hidden relative no-underline"
   >
-    <!-- Inner highlight overlay -->
-    <div class="absolute inset-0 pointer-events-none z-10" style="border-top: 2px solid rgba(255,255,255,0.2); border-left: 2px solid rgba(255,255,255,0.2); border-bottom: 2px solid rgba(0,0,0,0.15); border-right: 2px solid rgba(0,0,0,0.15)" />
 
     <!-- Image -->
     <div class="relative overflow-hidden">
