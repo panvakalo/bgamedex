@@ -33,11 +33,11 @@
   --theme-positive: #20a020;
   --theme-negative: #c02020;
 
-  --shadow-card: 4px 4px 0px #181820;
-  --shadow-card-hover: 6px 6px 0px #181820;
-  --shadow-modal: 8px 8px 0px #181820;
-  --shadow-filter-bar: 3px 3px 0px #181820;
-  --shadow-sidebar: 3px 0 0px #181820;
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --shadow-modal: none;
+  --shadow-filter-bar: none;
+  --shadow-sidebar: none;
 
   --glass-bg: rgba(216, 216, 192, 0.95);
   --glass-blur: 0px;
@@ -76,11 +76,11 @@
   --theme-positive: #40c040;
   --theme-negative: #f04040;
 
-  --shadow-card: 4px 4px 0px #000008;
-  --shadow-card-hover: 6px 6px 0px #000008;
-  --shadow-modal: 8px 8px 0px #000008;
-  --shadow-filter-bar: 3px 3px 0px #000008;
-  --shadow-sidebar: 3px 0 0px #000008;
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --shadow-modal: none;
+  --shadow-filter-bar: none;
+  --shadow-sidebar: none;
 
   --glass-bg: rgba(16, 16, 24, 0.95);
   --glass-blur: 0px;
@@ -207,23 +207,19 @@ textarea:focus {
   text-transform: uppercase;
 }
 
-/* ─── Card styles (8-bit hard shadow) ─── */
+/* ─── Card styles (8-bit) ─── */
 .card-elevated {
-  box-shadow: var(--shadow-card);
   border: var(--pixel-border);
 }
 .card-elevated:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translate(-2px, -2px);
+  filter: brightness(1.05);
 }
 
 .card-tactile {
-  box-shadow: var(--shadow-card);
   border: var(--pixel-border);
 }
 .card-tactile:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translate(-2px, -2px);
+  filter: brightness(1.05);
 }
 
 /* ─── Interactive badge (8-bit) ─── */
@@ -244,12 +240,10 @@ textarea:focus {
 
 /* ─── FAB play button (8-bit) ─── */
 .fab-play {
-  box-shadow: var(--shadow-card);
   border: var(--pixel-border);
 }
 .fab-play:hover {
-  box-shadow: var(--shadow-card-hover);
-  transform: translate(-2px, -2px);
+  filter: brightness(1.15);
 }
 
 /* ─── Glass surface (8-bit: no blur, just solid) ─── */
@@ -258,7 +252,6 @@ textarea:focus {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border: var(--pixel-border);
-  box-shadow: var(--shadow-filter-bar);
 }
 
 /* ─── Keyframes (8-bit: instant/stepped) ─── */
@@ -403,7 +396,6 @@ body::before {
 /* ─── Sidebar (8-bit) ─── */
 .sidebar-surface {
   background: var(--sidebar-bg);
-  box-shadow: var(--shadow-sidebar);
   border-right: var(--pixel-border);
 }
 
