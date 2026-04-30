@@ -429,6 +429,9 @@ textarea:focus {
 }
 
 /* ─── Buttons: SNES-style raised/pressed ─── */
+button, a, [role="button"], summary {
+  cursor: pointer;
+}
 button {
   font-family: var(--font-body);
   text-transform: uppercase;
@@ -604,10 +607,15 @@ textarea:focus {
 /* ─── Links ─── */
 a {
   text-decoration: none;
+  cursor: pointer;
 }
 a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+a.card-tactile:hover,
+a.no-underline:hover {
+  text-decoration: none;
 }
 
 /* ─── Border utility ─── */
