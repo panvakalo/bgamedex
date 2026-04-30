@@ -204,7 +204,7 @@ body {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.5;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
@@ -320,8 +320,9 @@ textarea:focus {
   box-shadow:
     inset 1px 1px 0 0 var(--badge-purple-hi),
     inset -1px -1px 0 0 var(--badge-purple-dk);
-  font-size: 8px;
+  font-size: 11px;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .badge-green {
   background: var(--badge-green-bg);
@@ -330,8 +331,9 @@ textarea:focus {
   box-shadow:
     inset 1px 1px 0 0 var(--badge-green-hi),
     inset -1px -1px 0 0 var(--badge-green-dk);
-  font-size: 8px;
+  font-size: 11px;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .badge-blue {
   background: var(--badge-blue-bg);
@@ -340,8 +342,9 @@ textarea:focus {
   box-shadow:
     inset 1px 1px 0 0 var(--badge-blue-hi),
     inset -1px -1px 0 0 var(--badge-blue-dk);
-  font-size: 8px;
+  font-size: 11px;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 .badge-amber {
   background: var(--badge-amber-bg);
@@ -350,8 +353,9 @@ textarea:focus {
   box-shadow:
     inset 1px 1px 0 0 var(--badge-amber-hi),
     inset -1px -1px 0 0 var(--badge-amber-dk);
-  font-size: 8px;
+  font-size: 11px;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* ─── Cards: beveled pixel panel ─── */

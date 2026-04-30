@@ -68,7 +68,7 @@ function isActive(item: typeof navItems[number]): boolean {
 </script>
 
 <template>
-  <div class="min-h-screen bg-surface">
+  <div class="min-h-screen bg-surface relative z-[1]">
     <!-- Sidebar (desktop) -->
     <aside
       v-if="isAuthenticated && user && !isAdminRoute"
@@ -80,7 +80,7 @@ function isActive(item: typeof navItems[number]): boolean {
       </RouterLink>
 
       <!-- Nav items -->
-      <nav class="flex-1 flex flex-col items-center gap-1 px-2 pt-2">
+      <nav class="flex-1 flex flex-col items-center gap-2 px-2 pt-2">
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
