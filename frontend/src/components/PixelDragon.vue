@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 
-const SCALE = 2
-const SPRITE_W = 32
-const SPRITE_H = 32
+const SCALE = 3
+const SPRITE_W = 16
+const SPRITE_H = 18
 const W = SPRITE_W * SCALE
 const H = SPRITE_H * SCALE
 const GROUND_OFFSET = 8
@@ -26,37 +26,30 @@ const stateTimer = ref(0)
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 
+// Colors sampled from reference image
 const C = {
-  bodyHi: '#6ae878',
-  body: '#38c848',
-  bodyMid: '#28a038',
-  bodyDk: '#187828',
-  bodyDkr: '#105818',
-  bellyHi: '#fff8e0',
-  belly: '#f0dca0',
-  bellyDk: '#d8b870',
+  outline: '#1a1020',
+  bodyHi: '#78c850',     // bright green highlight
+  body: '#58a840',        // main green
+  bodyMid: '#3d9050',     // mid green shadow
+  bodyDk: '#1a6040',      // deep teal shadow
+  bodyDkr: '#0e3828',     // darkest shadow
+  bellyHi: '#f0c848',     // yellow belly highlight
+  belly: '#e8a830',       // orange belly
+  bellyDk: '#c88020',     // belly shadow
   eyeWhite: '#ffffff',
-  eyeIris: '#c02020',
-  eyePupil: '#280808',
+  eyeIris: '#208060',     // teal-green iris
+  eyePupil: '#1a1020',
   eyeShine: '#ffffff',
-  hornHi: '#ffe870',
-  horn: '#f0c030',
-  hornDk: '#c89818',
-  wingHi: '#78d0f8',
-  wing: '#48a8e0',
-  wingMid: '#3080b8',
-  wingDk: '#205888',
-  wingMem: '#60c0f0',
-  wingMemDk: '#3898c8',
-  clawHi: '#fff0d0',
-  claw: '#e8d0a0',
-  clawDk: '#c0a060',
-  fire1: '#fff870',
-  fire2: '#f8a830',
-  fire3: '#e84020',
-  fire4: '#a02010',
-  noseDk: '#105818',
-  cheek: '#f08080',
+  wingOrange: '#d06030',  // wing outer
+  wingRed: '#a02820',     // wing membrane
+  wingDk: '#1a1020',      // wing outline
+  hornBase: '#d06030',    // horn/claw orange-red
+  hornTip: '#a02820',     // horn tip darker
+  fire1: '#f0c848',
+  fire2: '#e88030',
+  fire3: '#d04030',
+  fire4: '#a02820',
 }
 
 type SpriteData = [number, number, string][]
@@ -72,248 +65,207 @@ function drawSprite(ctx: CanvasRenderingContext2D, data: SpriteData) {
   }
 }
 
+// Base idle sprite — matches the reference image pixel art dragon
+// Sprite faces RIGHT. Canvas flip handles facingLeft.
+// Grid: 16 wide x 18 tall (0-indexed)
 function makeIdleFrame(f: number): SpriteData {
   const bob = f % 4 < 2 ? 0 : -1
   const blink = f % 24 < 2
   const tailWag = f % 6 < 3 ? 0 : 1
   const wingBob = f % 8 < 4 ? 0 : 1
   const b = bob
+  const O = C.outline
   const d: SpriteData = []
 
-  // Horns
-  d.push([13, 4+b, C.hornHi], [14, 3+b, C.horn], [14, 4+b, C.horn], [15, 2+b, C.hornHi], [15, 3+b, C.horn])
-  d.push([17, 4+b, C.hornHi], [18, 3+b, C.horn], [18, 4+b, C.horn], [19, 2+b, C.hornHi], [19, 3+b, C.horn])
+  // === HORNS (two small horns on top of head) ===
+  // Left horn
+  d.push([7, 0+b, C.hornBase], [7, 1+b, O])
+  d.push([8, 0+b, C.hornTip], [8, 1+b, C.hornBase])
+  // Right horn
+  d.push([10, 0+b, C.hornBase], [10, 1+b, O])
+  d.push([11, 0+b, C.hornTip], [11, 1+b, C.hornBase])
 
-  // Head
-  for (let hx = 8; hx <= 20; hx++)
-    for (let hy = 5+b; hy <= 14+b; hy++) {
-      if (hx < 10 && hy < 7+b) continue
-      if (hx > 19 && hy < 7+b) continue
-      if (hx < 9 && hy > 12+b) continue
-      d.push([hx, hy, C.body])
-    }
-  // Head highlight
-  for (let hx = 10; hx <= 18; hx++)
-    d.push([hx, 5+b, C.bodyHi])
-  for (let hx = 9; hx <= 11; hx++)
-    d.push([hx, 6+b, C.bodyHi])
-
-  // Snout
-  for (let sx = 5; sx <= 9; sx++)
-    for (let sy = 9+b; sy <= 13+b; sy++)
-      d.push([sx, sy, C.body])
-  d.push([5, 9+b, C.bodyHi], [6, 9+b, C.bodyHi], [5, 10+b, C.bodyHi])
-  d.push([5, 12+b, C.bodyMid], [5, 13+b, C.bodyDk], [6, 13+b, C.bodyDk])
-  // Nostrils
-  d.push([6, 10+b, C.noseDk], [6, 11+b, C.noseDk])
-  // Mouth line
-  for (let mx = 7; mx <= 9; mx++)
-    d.push([mx, 13+b, C.bodyDk])
-
-  // Eye
+  // === HEAD (big chibi head ~7x7) ===
+  // Row 1+b (top of head)
+  d.push([8, 1+b, O], [9, 1+b, O], [10, 1+b, O])
+  // Row 2+b
+  d.push([7, 2+b, O], [8, 2+b, C.bodyHi], [9, 2+b, C.bodyHi], [10, 2+b, C.bodyHi], [11, 2+b, O])
+  // Row 3+b
+  d.push([6, 3+b, O], [7, 3+b, C.bodyHi], [8, 3+b, C.bodyHi], [9, 3+b, C.body], [10, 3+b, C.body], [11, 3+b, C.body], [12, 3+b, O])
+  // Row 4+b — eye row
   if (!blink) {
-    for (let ex = 11; ex <= 14; ex++)
-      for (let ey = 8+b; ey <= 11+b; ey++)
-        d.push([ex, ey, C.eyeWhite])
-    d.push([12, 9+b, C.eyeIris], [13, 9+b, C.eyeIris], [12, 10+b, C.eyeIris], [13, 10+b, C.eyeIris])
-    d.push([13, 9+b, C.eyePupil], [13, 10+b, C.eyePupil])
-    d.push([12, 9+b, C.eyeShine])
-    // Brow
-    d.push([11, 7+b, C.bodyDk], [12, 7+b, C.bodyDk], [13, 7+b, C.bodyDk], [14, 7+b, C.bodyDk])
+    d.push([6, 4+b, O], [7, 4+b, C.body], [8, 4+b, O], [9, 4+b, C.eyeIris], [10, 4+b, O], [11, 4+b, C.body], [12, 4+b, O])
+    d.push([9, 3+b, C.eyeShine]) // shine pixel above iris
   } else {
-    d.push([11, 9+b, C.bodyDk], [12, 9+b, C.bodyDk], [13, 9+b, C.bodyDk], [14, 9+b, C.bodyDk])
+    d.push([6, 4+b, O], [7, 4+b, C.body], [8, 4+b, C.body], [9, 4+b, O], [10, 4+b, C.body], [11, 4+b, C.body], [12, 4+b, O])
   }
+  // Row 5+b
+  d.push([6, 5+b, O], [7, 5+b, C.body], [8, 5+b, C.body], [9, 5+b, C.body], [10, 5+b, C.body], [11, 5+b, C.bodyMid], [12, 5+b, O])
+  // Row 6+b (bottom of head, meets neck)
+  d.push([7, 6+b, O], [8, 6+b, C.bodyMid], [9, 6+b, C.bodyMid], [10, 6+b, C.bodyMid], [11, 6+b, O])
 
-  // Cheek
-  d.push([9, 11+b, C.cheek], [9, 12+b, C.cheek])
+  // === NECK / BODY ===
+  // Row 7+b (neck connects to body, belly starts)
+  d.push([5, 7+b, O], [6, 7+b, C.bodyMid], [7, 7+b, C.bodyDk], [8, 7+b, C.belly], [9, 7+b, C.belly], [10, 7+b, C.bodyDk], [11, 7+b, O])
 
-  // Head bottom shadow
-  for (let hx = 10; hx <= 19; hx++)
-    d.push([hx, 14+b, C.bodyDk])
-
-  // Body
-  for (let bx = 10; bx <= 22; bx++)
-    for (let by = 14+b; by <= 24+b; by++) {
-      if (bx > 21 && by < 16+b) continue
-      if (bx > 22 && by > 23+b) continue
-      d.push([bx, by, C.body])
-    }
-  // Body highlight
-  for (let bx = 10; bx <= 14; bx++)
-    d.push([bx, 15+b, C.bodyHi])
-  // Body shadow
-  for (let bx = 18; bx <= 22; bx++)
-    d.push([bx, 24+b, C.bodyDk])
-
-  // Belly
-  for (let bx = 11; bx <= 17; bx++)
-    for (let by = 19+b; by <= 24+b; by++)
-      d.push([bx, by, C.belly])
-  for (let bx = 12; bx <= 16; bx++)
-    d.push([bx, 19+b, C.bellyHi])
-  for (let bx = 11; bx <= 17; bx++)
-    d.push([bx, 24+b, C.bellyDk])
-  // Belly lines
-  d.push([13, 21+b, C.bellyDk], [15, 21+b, C.bellyDk])
-  d.push([13, 23+b, C.bellyDk], [15, 23+b, C.bellyDk])
-
-  // Wing
+  // === WING (behind body, to the left) ===
   const wy = wingBob
-  d.push([20, 12+b-wy, C.wingHi], [21, 11+b-wy, C.wingHi], [22, 10+b-wy, C.wing])
-  d.push([23, 9+b-wy, C.wing], [24, 9+b-wy, C.wing], [25, 10+b-wy, C.wingMid])
-  d.push([21, 12+b-wy, C.wing], [22, 11+b-wy, C.wing], [23, 11+b-wy, C.wingMid])
-  d.push([24, 11+b-wy, C.wingMid], [25, 11+b-wy, C.wingDk])
-  // Wing membrane
-  d.push([22, 12+b-wy, C.wingMem], [23, 12+b-wy, C.wingMem], [24, 12+b-wy, C.wingMemDk])
-  d.push([23, 13+b-wy, C.wingMemDk], [24, 13+b-wy, C.wingDk])
-  // Wing bone highlight
-  d.push([21, 10+b-wy, C.wingHi])
+  d.push([2, 7+b-wy, O], [3, 6+b-wy, O], [4, 6+b-wy, O])
+  d.push([1, 8+b-wy, O], [2, 8+b-wy, C.wingOrange], [3, 7+b-wy, C.wingOrange], [4, 7+b-wy, C.wingRed])
+  d.push([1, 9+b-wy, O], [2, 9+b-wy, C.wingRed], [3, 8+b-wy, C.wingRed], [4, 8+b-wy, O])
+  d.push([2, 10+b-wy, O], [3, 9+b-wy, O])
 
-  // Tail
-  d.push([22, 22+b, C.body], [23, 21+b+tailWag, C.body], [24, 20+b+tailWag, C.bodyMid])
-  d.push([25, 19+b+tailWag, C.bodyMid], [26, 18+b+tailWag, C.bodyDk], [27, 17+b+tailWag, C.bodyDk])
-  d.push([28, 17+b+tailWag, C.hornDk])
-  // Tail spade
-  d.push([28, 16+b+tailWag, C.horn], [29, 16+b+tailWag, C.horn], [29, 17+b+tailWag, C.hornDk])
-  d.push([28, 18+b+tailWag, C.horn], [29, 18+b+tailWag, C.hornDk])
+  // === BODY (main torso) ===
+  // Row 8+b
+  d.push([4, 8+b, O], [5, 8+b, C.body], [6, 8+b, C.bodyMid], [7, 8+b, C.bodyDk], [8, 8+b, C.bellyHi], [9, 8+b, C.belly], [10, 8+b, C.bodyDk], [11, 8+b, O])
+  // Row 9+b
+  d.push([4, 9+b, O], [5, 9+b, C.bodyMid], [6, 9+b, C.bodyDk], [7, 9+b, C.bodyDk], [8, 9+b, C.belly], [9, 9+b, C.bellyDk], [10, 9+b, C.bodyDk], [11, 9+b, O])
+  // Row 10+b
+  d.push([4, 10+b, O], [5, 10+b, C.bodyMid], [6, 10+b, C.bodyDk], [7, 10+b, C.bodyDk], [8, 10+b, C.bellyDk], [9, 10+b, C.bellyDk], [10, 10+b, C.bodyDkr], [11, 10+b, O])
 
-  // Front legs
-  for (let ly = 24+b; ly <= 28+b; ly++) {
-    d.push([12, ly, C.bodyMid], [13, ly, C.body], [14, ly, C.bodyMid])
-  }
-  d.push([12, 25+b, C.bodyHi], [13, 25+b, C.bodyHi])
-  // Front foot
-  d.push([11, 29+b, C.clawHi], [12, 29+b, C.claw], [13, 29+b, C.claw], [14, 29+b, C.claw], [15, 29+b, C.clawDk])
-  d.push([11, 28+b, C.claw], [15, 28+b, C.clawDk])
-  // Claws
-  d.push([10, 29+b, C.clawDk], [15, 30+b, C.clawDk])
+  // === LEGS ===
+  // Row 11+b (top of legs)
+  d.push([4, 11+b, O], [5, 11+b, C.bodyMid], [6, 11+b, O], [7, 11+b, C.bodyDk], [8, 11+b, C.bodyDk], [9, 11+b, O], [10, 11+b, C.bodyDkr], [11, 11+b, O])
+  // Row 12+b (legs)
+  d.push([4, 12+b, O], [5, 12+b, C.bodyDk], [6, 12+b, O], [7, 12+b, C.bodyDk], [8, 12+b, C.bodyDkr], [9, 12+b, O], [10, 12+b, C.bodyDkr], [11, 12+b, O])
+  // Row 13+b (feet)
+  d.push([3, 13+b, O], [4, 13+b, C.hornBase], [5, 13+b, C.bodyDk], [6, 13+b, C.hornBase], [7, 13+b, O],
+         [8, 13+b, O], [9, 13+b, C.hornBase], [10, 13+b, C.bodyDkr], [11, 13+b, C.hornBase], [12, 13+b, O])
+  // Row 14+b (bottom of feet outlines)
+  d.push([3, 14+b, O], [4, 14+b, O], [5, 14+b, O], [6, 14+b, O],
+         [8, 14+b, O], [9, 14+b, O], [10, 14+b, O], [11, 14+b, O])
 
-  // Back legs
-  for (let ly = 23+b; ly <= 28+b; ly++) {
-    d.push([18, ly, C.bodyDk], [19, ly, C.bodyMid], [20, ly, C.bodyDk])
-  }
-  // Thigh (thicker)
-  d.push([17, 23+b, C.bodyMid], [21, 23+b, C.bodyDk])
-  d.push([17, 24+b, C.bodyMid], [21, 24+b, C.bodyDk])
-  // Back foot
-  d.push([17, 29+b, C.clawHi], [18, 29+b, C.claw], [19, 29+b, C.claw], [20, 29+b, C.claw], [21, 29+b, C.clawDk])
-  d.push([17, 28+b, C.claw], [21, 28+b, C.clawDk])
-  d.push([16, 29+b, C.clawDk], [21, 30+b, C.clawDk])
-
-  // Spines along back
-  d.push([16, 4+b, C.hornHi])
-  d.push([15, 14+b, C.horn], [17, 14+b, C.horn])
-  d.push([16, 13+b, C.hornHi], [16, 14+b, C.horn])
-  d.push([19, 16+b, C.horn], [19, 15+b, C.hornHi])
+  // === TAIL (curling left from body base) ===
+  const tw = tailWag
+  d.push([3, 10+b+tw, O], [4, 10+b+tw, C.bodyMid])
+  d.push([2, 11+b+tw, O], [3, 11+b+tw, C.bodyDk])
+  d.push([1, 12+b+tw, O], [2, 12+b+tw, C.bodyDk])
+  d.push([0, 13+b+tw, O], [1, 13+b+tw, C.bodyDkr])
+  d.push([0, 14+b+tw, C.hornBase], [1, 14+b+tw, O])
 
   return d
 }
 
 function makeWalkFrame(f: number): SpriteData {
-  const d = makeIdleFrame(f)
-  const b = f % 4 < 2 ? 0 : -1
+  const bob = f % 4 < 2 ? 0 : -1
+  const blink = f % 24 < 2
+  const tailWag = f % 4 < 2 ? 0 : 1
+  const wingBob = f % 4 < 2 ? 0 : 1
+  const b = bob
+  const O = C.outline
+  const d: SpriteData = []
   const step = f % 4
 
-  // Override legs with walking animation
-  // Remove idle leg pixels by overdrawing
-  const legOverride: SpriteData = []
+  // Reuse head, horns, body from idle (but rebuild for walk anim)
+  // Horns
+  d.push([7, 0+b, C.hornBase], [7, 1+b, O], [8, 0+b, C.hornTip], [8, 1+b, C.hornBase])
+  d.push([10, 0+b, C.hornBase], [10, 1+b, O], [11, 0+b, C.hornTip], [11, 1+b, C.hornBase])
 
+  // Head
+  d.push([8, 1+b, O], [9, 1+b, O], [10, 1+b, O])
+  d.push([7, 2+b, O], [8, 2+b, C.bodyHi], [9, 2+b, C.bodyHi], [10, 2+b, C.bodyHi], [11, 2+b, O])
+  d.push([6, 3+b, O], [7, 3+b, C.bodyHi], [8, 3+b, C.bodyHi], [9, 3+b, C.body], [10, 3+b, C.body], [11, 3+b, C.body], [12, 3+b, O])
+  if (!blink) {
+    d.push([6, 4+b, O], [7, 4+b, C.body], [8, 4+b, O], [9, 4+b, C.eyeIris], [10, 4+b, O], [11, 4+b, C.body], [12, 4+b, O])
+    d.push([9, 3+b, C.eyeShine])
+  } else {
+    d.push([6, 4+b, O], [7, 4+b, C.body], [8, 4+b, C.body], [9, 4+b, O], [10, 4+b, C.body], [11, 4+b, C.body], [12, 4+b, O])
+  }
+  d.push([6, 5+b, O], [7, 5+b, C.body], [8, 5+b, C.body], [9, 5+b, C.body], [10, 5+b, C.body], [11, 5+b, C.bodyMid], [12, 5+b, O])
+  d.push([7, 6+b, O], [8, 6+b, C.bodyMid], [9, 6+b, C.bodyMid], [10, 6+b, C.bodyMid], [11, 6+b, O])
+
+  // Neck
+  d.push([5, 7+b, O], [6, 7+b, C.bodyMid], [7, 7+b, C.bodyDk], [8, 7+b, C.belly], [9, 7+b, C.belly], [10, 7+b, C.bodyDk], [11, 7+b, O])
+
+  // Wing
+  const wy = wingBob
+  d.push([2, 7+b-wy, O], [3, 6+b-wy, O], [4, 6+b-wy, O])
+  d.push([1, 8+b-wy, O], [2, 8+b-wy, C.wingOrange], [3, 7+b-wy, C.wingOrange], [4, 7+b-wy, C.wingRed])
+  d.push([1, 9+b-wy, O], [2, 9+b-wy, C.wingRed], [3, 8+b-wy, C.wingRed], [4, 8+b-wy, O])
+  d.push([2, 10+b-wy, O], [3, 9+b-wy, O])
+
+  // Body
+  d.push([4, 8+b, O], [5, 8+b, C.body], [6, 8+b, C.bodyMid], [7, 8+b, C.bodyDk], [8, 8+b, C.bellyHi], [9, 8+b, C.belly], [10, 8+b, C.bodyDk], [11, 8+b, O])
+  d.push([4, 9+b, O], [5, 9+b, C.bodyMid], [6, 9+b, C.bodyDk], [7, 9+b, C.bodyDk], [8, 9+b, C.belly], [9, 9+b, C.bellyDk], [10, 9+b, C.bodyDk], [11, 9+b, O])
+  d.push([4, 10+b, O], [5, 10+b, C.bodyMid], [6, 10+b, C.bodyDk], [7, 10+b, C.bodyDk], [8, 10+b, C.bellyDk], [9, 10+b, C.bellyDk], [10, 10+b, C.bodyDkr], [11, 10+b, O])
+
+  // Walking legs — alternate front/back
   if (step < 2) {
     // Front leg forward, back leg back
-    for (let ly = 24+b; ly <= 27+b; ly++) {
-      legOverride.push([11, ly, C.bodyMid], [12, ly, C.body], [13, ly, C.bodyMid])
-    }
-    legOverride.push([10, 28+b, C.clawHi], [11, 28+b, C.claw], [12, 28+b, C.claw], [13, 28+b, C.claw])
-    legOverride.push([9, 28+b, C.clawDk], [13, 29+b, C.clawDk])
+    d.push([4, 11+b, O], [5, 11+b, C.bodyMid], [6, 11+b, O])
+    d.push([3, 12+b, O], [4, 12+b, C.bodyDk], [5, 12+b, C.bodyDk], [6, 12+b, O])
+    d.push([3, 13+b, C.hornBase], [4, 13+b, O], [5, 13+b, O])
 
-    for (let ly = 23+b; ly <= 27+b; ly++) {
-      legOverride.push([19, ly, C.bodyDk], [20, ly, C.bodyMid], [21, ly, C.bodyDk])
-    }
-    legOverride.push([19, 28+b, C.clawHi], [20, 28+b, C.claw], [21, 28+b, C.claw], [22, 28+b, C.clawDk])
+    d.push([8, 11+b, O], [9, 11+b, C.bodyDk], [10, 11+b, C.bodyDkr], [11, 11+b, O])
+    d.push([9, 12+b, O], [10, 12+b, C.bodyDkr], [11, 12+b, O])
+    d.push([9, 13+b, O], [10, 13+b, C.hornBase], [11, 13+b, C.bodyDkr], [12, 13+b, O])
+    d.push([9, 14+b, O], [10, 14+b, O], [11, 14+b, O])
   } else {
     // Front leg back, back leg forward
-    for (let ly = 24+b; ly <= 27+b; ly++) {
-      legOverride.push([13, ly, C.bodyMid], [14, ly, C.body], [15, ly, C.bodyMid])
-    }
-    legOverride.push([13, 28+b, C.clawHi], [14, 28+b, C.claw], [15, 28+b, C.claw], [16, 28+b, C.clawDk])
-    legOverride.push([12, 28+b, C.clawDk], [16, 29+b, C.clawDk])
+    d.push([5, 11+b, O], [6, 11+b, C.bodyMid], [7, 11+b, O])
+    d.push([5, 12+b, O], [6, 12+b, C.bodyDk], [7, 12+b, O])
+    d.push([5, 13+b, O], [6, 13+b, C.hornBase], [7, 13+b, O])
+    d.push([5, 14+b, O], [6, 14+b, O])
 
-    for (let ly = 23+b; ly <= 27+b; ly++) {
-      legOverride.push([17, ly, C.bodyDk], [18, ly, C.bodyMid], [19, ly, C.bodyDk])
-    }
-    legOverride.push([16, 28+b, C.clawHi], [17, 28+b, C.claw], [18, 28+b, C.claw], [19, 28+b, C.claw])
-    legOverride.push([15, 28+b, C.clawDk], [19, 29+b, C.clawDk])
+    d.push([8, 11+b, O], [9, 11+b, O], [10, 11+b, C.bodyDkr], [11, 11+b, O])
+    d.push([8, 12+b, O], [9, 12+b, C.hornBase], [10, 12+b, C.bodyDkr], [11, 12+b, C.hornBase], [12, 12+b, O])
+    d.push([8, 13+b, O], [9, 13+b, O], [10, 13+b, O], [11, 13+b, O])
   }
 
-  return [...d, ...legOverride]
+  // Tail
+  const tw = tailWag
+  d.push([3, 10+b+tw, O], [4, 10+b+tw, C.bodyMid])
+  d.push([2, 11+b+tw, O], [3, 11+b+tw, C.bodyDk])
+  d.push([1, 12+b+tw, O], [2, 12+b+tw, C.bodyDk])
+  d.push([0, 13+b+tw, O], [1, 13+b+tw, C.bodyDkr])
+  d.push([0, 14+b+tw, C.hornBase], [1, 14+b+tw, O])
+
+  return d
 }
 
 function makeSitFrame(f: number): SpriteData {
   const tailWag = f % 6 < 3 ? 0 : 1
   const blink = f % 20 < 2
+  const O = C.outline
   const d: SpriteData = []
 
-  // Horns (lowered position)
-  d.push([13, 8, C.hornHi], [14, 7, C.horn], [14, 8, C.horn], [15, 6, C.hornHi])
-  d.push([17, 8, C.hornHi], [18, 7, C.horn], [18, 8, C.horn], [19, 6, C.hornHi])
+  // Horns
+  d.push([7, 3, C.hornBase], [7, 4, O], [8, 3, C.hornTip], [8, 4, C.hornBase])
+  d.push([10, 3, C.hornBase], [10, 4, O], [11, 3, C.hornTip], [11, 4, C.hornBase])
 
-  // Head
-  for (let hx = 8; hx <= 20; hx++)
-    for (let hy = 9; hy <= 18; hy++) {
-      if (hx < 10 && hy < 11) continue
-      if (hx > 19 && hy < 11) continue
-      d.push([hx, hy, C.body])
-    }
-  for (let hx = 10; hx <= 18; hx++) d.push([hx, 9, C.bodyHi])
-
-  // Snout
-  for (let sx = 5; sx <= 9; sx++)
-    for (let sy = 13; sy <= 17; sy++)
-      d.push([sx, sy, C.body])
-  d.push([5, 13, C.bodyHi], [6, 13, C.bodyHi])
-  d.push([6, 14, C.noseDk], [6, 15, C.noseDk])
-
-  // Happy eyes (squinting)
+  // Head (lowered for sitting)
+  d.push([8, 4, O], [9, 4, O], [10, 4, O])
+  d.push([7, 5, O], [8, 5, C.bodyHi], [9, 5, C.bodyHi], [10, 5, C.bodyHi], [11, 5, O])
+  d.push([6, 6, O], [7, 6, C.bodyHi], [8, 6, C.bodyHi], [9, 6, C.body], [10, 6, C.body], [11, 6, C.body], [12, 6, O])
   if (!blink) {
-    d.push([11, 12, C.eyeWhite], [12, 12, C.eyeWhite], [13, 12, C.eyeWhite], [14, 12, C.eyeWhite])
-    d.push([11, 13, C.eyeWhite], [12, 13, C.eyeIris], [13, 13, C.eyePupil], [14, 13, C.eyeWhite])
-    d.push([12, 12, C.eyeShine])
-    // Happy brow
-    d.push([11, 11, C.bodyDk], [14, 11, C.bodyDk])
+    d.push([6, 7, O], [7, 7, C.body], [8, 7, O], [9, 7, C.eyeIris], [10, 7, O], [11, 7, C.body], [12, 7, O])
+    d.push([9, 6, C.eyeShine])
   } else {
-    d.push([11, 13, C.bodyDk], [12, 13, C.bodyDk], [13, 13, C.bodyDk], [14, 13, C.bodyDk])
+    d.push([6, 7, O], [7, 7, C.body], [8, 7, C.body], [9, 7, O], [10, 7, C.body], [11, 7, C.body], [12, 7, O])
   }
-  d.push([9, 15, C.cheek], [9, 16, C.cheek])
+  d.push([6, 8, O], [7, 8, C.body], [8, 8, C.body], [9, 8, C.body], [10, 8, C.body], [11, 8, C.bodyMid], [12, 8, O])
+  d.push([7, 9, O], [8, 9, C.bodyMid], [9, 9, C.bodyMid], [10, 9, C.bodyMid], [11, 9, O])
 
-  // Body (sitting — compressed)
-  for (let bx = 10; bx <= 22; bx++)
-    for (let by = 18; by <= 27; by++)
-      d.push([bx, by, C.body])
-  // Belly
-  for (let bx = 11; bx <= 17; bx++)
-    for (let by = 22; by <= 27; by++)
-      d.push([bx, by, C.belly])
-  for (let bx = 12; bx <= 16; bx++) d.push([bx, 22, C.bellyHi])
+  // Neck + body (compressed for sitting)
+  d.push([5, 10, O], [6, 10, C.bodyMid], [7, 10, C.bodyDk], [8, 10, C.belly], [9, 10, C.belly], [10, 10, C.bodyDk], [11, 10, O])
+  d.push([5, 11, O], [6, 11, C.bodyMid], [7, 11, C.bodyDk], [8, 11, C.bellyHi], [9, 11, C.belly], [10, 11, C.bodyDk], [11, 11, O])
+  d.push([5, 12, O], [6, 12, C.bodyDk], [7, 12, C.bodyDk], [8, 12, C.belly], [9, 12, C.bellyDk], [10, 12, C.bodyDkr], [11, 12, O])
 
   // Wing (folded)
-  d.push([20, 16, C.wingHi], [21, 15, C.wing], [22, 15, C.wingMid])
-  d.push([21, 16, C.wing], [22, 16, C.wingMid], [23, 16, C.wingDk])
-  d.push([22, 17, C.wingMemDk], [23, 17, C.wingDk])
+  d.push([3, 9, O], [4, 9, O])
+  d.push([2, 10, O], [3, 10, C.wingOrange], [4, 10, C.wingRed])
+  d.push([2, 11, O], [3, 11, C.wingRed], [4, 11, O])
+  d.push([3, 12, O])
 
-  // Tail (wagging)
-  d.push([22, 25, C.body], [23, 24+tailWag, C.body], [24, 23+tailWag, C.bodyMid])
-  d.push([25, 22+tailWag, C.bodyMid], [26, 21+tailWag, C.bodyDk])
-  d.push([27, 20+tailWag, C.horn], [27, 21+tailWag, C.hornDk], [28, 20+tailWag, C.horn])
+  // Tucked legs (sitting)
+  d.push([5, 13, O], [6, 13, C.hornBase], [7, 13, C.bodyDk], [8, 13, C.bodyDk], [9, 13, C.hornBase], [10, 13, C.bodyDkr], [11, 13, O])
+  d.push([5, 14, O], [6, 14, O], [7, 14, O], [8, 14, O], [9, 14, O], [10, 14, O], [11, 14, O])
 
-  // Legs (tucked)
-  d.push([12, 28, C.claw], [13, 28, C.claw], [14, 28, C.claw])
-  d.push([11, 29, C.clawHi], [12, 29, C.claw], [13, 29, C.claw], [14, 29, C.claw], [15, 29, C.clawDk])
-  d.push([18, 28, C.claw], [19, 28, C.claw], [20, 28, C.claw])
-  d.push([17, 29, C.clawHi], [18, 29, C.claw], [19, 29, C.claw], [20, 29, C.claw], [21, 29, C.clawDk])
-
-  // Spines
-  d.push([16, 8, C.hornHi])
-  d.push([16, 17, C.horn], [18, 17, C.horn])
+  // Tail
+  d.push([3, 12+tailWag, O], [4, 12+tailWag, C.bodyMid])
+  d.push([2, 13+tailWag, O], [3, 13+tailWag, C.bodyDk])
+  d.push([1, 14+tailWag, O], [2, 14+tailWag, C.bodyDkr])
+  d.push([0, 15+tailWag, C.hornBase], [1, 15+tailWag, O])
 
   return d
 }
@@ -321,73 +273,39 @@ function makeSitFrame(f: number): SpriteData {
 function makeSleepFrame(f: number): SpriteData {
   const breathe = f % 12 < 6 ? 0 : 1
   const zPhase = Math.floor(f / 8) % 4
+  const O = C.outline
   const d: SpriteData = []
 
-  // Curled body
-  for (let bx = 8; bx <= 24; bx++)
-    for (let by = 20+breathe; by <= 28; by++) {
-      if (bx < 10 && by < 22+breathe) continue
-      if (bx > 23 && by < 22+breathe) continue
-      d.push([bx, by, C.body])
-    }
-  // Belly showing
-  for (let bx = 12; bx <= 18; bx++)
-    for (let by = 24; by <= 28; by++)
-      d.push([bx, by, C.belly])
+  // Curled up body blob
+  // Body
+  d.push([4, 10+breathe, O], [5, 10+breathe, O], [6, 10+breathe, O], [7, 10+breathe, O], [8, 10+breathe, O], [9, 10+breathe, O], [10, 10+breathe, O], [11, 10+breathe, O])
+  d.push([3, 11+breathe, O], [4, 11+breathe, C.body], [5, 11+breathe, C.bodyMid], [6, 11+breathe, C.bodyDk], [7, 11+breathe, C.belly], [8, 11+breathe, C.belly], [9, 11+breathe, C.bodyDk], [10, 11+breathe, C.bodyDk], [11, 11+breathe, O])
+  d.push([3, 12+breathe, O], [4, 12+breathe, C.bodyMid], [5, 12+breathe, C.bodyDk], [6, 12+breathe, C.bodyDk], [7, 12+breathe, C.bellyDk], [8, 12+breathe, C.bellyDk], [9, 12+breathe, C.bodyDkr], [10, 12+breathe, C.bodyDkr], [11, 12+breathe, O])
+  d.push([3, 13+breathe, O], [4, 13+breathe, O], [5, 13+breathe, O], [6, 13+breathe, O], [7, 13+breathe, O], [8, 13+breathe, O], [9, 13+breathe, O], [10, 13+breathe, O], [11, 13+breathe, O])
 
-  // Head (resting on paws)
-  for (let hx = 6; hx <= 16; hx++)
-    for (let hy = 16+breathe; hy <= 22+breathe; hy++) {
-      if (hx < 8 && hy < 18+breathe) continue
-      d.push([hx, hy, C.body])
-    }
-  for (let hx = 7; hx <= 14; hx++) d.push([hx, 16+breathe, C.bodyHi])
+  // Head (resting, eyes closed)
+  d.push([5, 8+breathe, O], [6, 8+breathe, O], [7, 8+breathe, O], [8, 8+breathe, O], [9, 8+breathe, O])
+  d.push([4, 9+breathe, O], [5, 9+breathe, C.bodyHi], [6, 9+breathe, C.body], [7, 9+breathe, C.body], [8, 9+breathe, C.body], [9, 9+breathe, O])
+  d.push([4, 10+breathe, O], [5, 10+breathe, C.body], [6, 10+breathe, O], [7, 10+breathe, O], [8, 10+breathe, C.bodyMid], [9, 10+breathe, O])
 
-  // Closed eyes
-  d.push([9, 18+breathe, C.bodyDk], [10, 18+breathe, C.bodyDk], [11, 18+breathe, C.bodyDk])
-  d.push([9, 19+breathe, C.bodyDk], [11, 19+breathe, C.bodyDk])
-  // Cheek
-  d.push([8, 20+breathe, C.cheek], [8, 21+breathe, C.cheek])
+  // Horn (one visible)
+  d.push([5, 7+breathe, C.hornBase], [6, 7+breathe, C.hornTip])
 
-  // Snout
-  for (let sx = 4; sx <= 7; sx++)
-    for (let sy = 19+breathe; sy <= 22+breathe; sy++)
-      d.push([sx, sy, C.body])
-  d.push([4, 20+breathe, C.noseDk])
+  // Wing draped over body
+  d.push([7, 10+breathe, C.wingOrange], [8, 10+breathe, C.wingRed], [9, 10+breathe, C.wingRed], [10, 10+breathe, C.wingOrange])
 
-  // Horns
-  d.push([13, 15+breathe, C.horn], [14, 14+breathe, C.hornHi], [15, 15+breathe, C.horn])
+  // Tail curled
+  d.push([11, 12+breathe, C.bodyDk], [12, 11+breathe, O], [12, 12+breathe, C.bodyDkr])
+  d.push([13, 12+breathe, C.hornBase], [13, 11+breathe, O])
 
-  // Wing (draped over body)
-  for (let wx = 16; wx <= 22; wx++)
-    for (let wy = 19+breathe; wy <= 22+breathe; wy++)
-      d.push([wx, wy, C.wingMem])
-  for (let wx = 16; wx <= 22; wx++) d.push([wx, 19+breathe, C.wingHi])
-  for (let wx = 16; wx <= 22; wx++) d.push([wx, 22+breathe, C.wingDk])
-  d.push([16, 20+breathe, C.wingHi], [22, 20+breathe, C.wingDk])
-
-  // Tail (curled around)
-  d.push([24, 24, C.body], [25, 25, C.bodyMid], [25, 26, C.bodyDk])
-  d.push([24, 27, C.bodyDk], [23, 28, C.bodyMid], [22, 29, C.body])
-  d.push([21, 29, C.bodyMid])
-  // Tail tip
-  d.push([20, 29, C.horn], [19, 29, C.hornDk])
-
-  // Paws
-  d.push([5, 23+breathe, C.clawHi], [6, 23+breathe, C.claw], [7, 23+breathe, C.claw])
+  // Paw visible
+  d.push([3, 12+breathe, C.hornBase], [4, 13+breathe, C.hornBase])
 
   // Z's
-  const zc = C.wingHi
-  if (zPhase >= 1) {
-    d.push([4, 14+breathe, zc], [5, 14+breathe, zc], [5, 15+breathe, zc], [4, 15+breathe, zc])
-  }
-  if (zPhase >= 2) {
-    d.push([2, 11+breathe, zc], [3, 11+breathe, zc], [3, 12+breathe, zc], [2, 12+breathe, zc])
-    d.push([2, 10+breathe, zc])
-  }
-  if (zPhase >= 3) {
-    d.push([1, 7+breathe, zc], [2, 7+breathe, zc], [1, 8+breathe, zc])
-  }
+  const zc = C.bellyHi
+  if (zPhase >= 1) d.push([3, 6+breathe, zc], [4, 6+breathe, zc], [4, 7+breathe, zc], [3, 7+breathe, zc])
+  if (zPhase >= 2) d.push([2, 4+breathe, zc], [3, 4+breathe, zc], [2, 5+breathe, zc])
+  if (zPhase >= 3) d.push([1, 2+breathe, zc], [2, 2+breathe, zc], [1, 3+breathe, zc])
 
   return d
 }
@@ -395,148 +313,106 @@ function makeSleepFrame(f: number): SpriteData {
 function makeJumpFrame(f: number): SpriteData {
   const wingFlap = f % 3
   const fireFrame = f % 4
+  const O = C.outline
   const d: SpriteData = []
 
-  // Head (looking up slightly)
-  for (let hx = 8; hx <= 20; hx++)
-    for (let hy = 4; hy <= 12; hy++) {
-      if (hx < 10 && hy < 6) continue
-      if (hx > 19 && hy < 6) continue
-      d.push([hx, hy, C.body])
-    }
-  for (let hx = 10; hx <= 18; hx++) d.push([hx, 4, C.bodyHi])
-
   // Horns
-  d.push([13, 3, C.hornHi], [14, 2, C.horn], [15, 1, C.hornHi])
-  d.push([17, 3, C.hornHi], [18, 2, C.horn], [19, 1, C.hornHi])
+  d.push([7, 0, C.hornBase], [7, 1, O], [8, 0, C.hornTip], [8, 1, C.hornBase])
+  d.push([10, 0, C.hornBase], [10, 1, O], [11, 0, C.hornTip], [11, 1, C.hornBase])
 
-  // Excited eye (wide)
-  for (let ex = 11; ex <= 15; ex++)
-    for (let ey = 6; ey <= 10; ey++)
-      d.push([ex, ey, C.eyeWhite])
-  d.push([12, 7, C.eyeIris], [13, 7, C.eyeIris], [14, 7, C.eyeIris])
-  d.push([12, 8, C.eyeIris], [13, 8, C.eyePupil], [14, 8, C.eyeIris])
-  d.push([12, 9, C.eyeIris], [13, 9, C.eyeIris], [14, 9, C.eyeIris])
-  d.push([12, 7, C.eyeShine])
-
-  // Snout
-  for (let sx = 5; sx <= 9; sx++)
-    for (let sy = 8; sy <= 12; sy++)
-      d.push([sx, sy, C.body])
-  d.push([6, 9, C.noseDk], [6, 10, C.noseDk])
+  // Head
+  d.push([8, 1, O], [9, 1, O], [10, 1, O])
+  d.push([7, 2, O], [8, 2, C.bodyHi], [9, 2, C.bodyHi], [10, 2, C.bodyHi], [11, 2, O])
+  d.push([6, 3, O], [7, 3, C.bodyHi], [8, 3, C.bodyHi], [9, 3, C.body], [10, 3, C.body], [11, 3, C.body], [12, 3, O])
+  // Excited wide eye
+  d.push([6, 4, O], [7, 4, C.body], [8, 4, O], [9, 4, C.eyeIris], [10, 4, O], [11, 4, C.body], [12, 4, O])
+  d.push([9, 3, C.eyeShine])
+  d.push([6, 5, O], [7, 5, C.body], [8, 5, C.body], [9, 5, C.body], [10, 5, C.body], [11, 5, C.bodyMid], [12, 5, O])
 
   // Open mouth for fire
-  d.push([5, 12, C.fire3], [6, 12, C.fire3], [7, 12, C.fire2])
+  d.push([7, 6, O], [8, 6, C.bodyMid], [9, 6, C.fire3], [10, 6, C.fire2], [11, 6, O])
 
   // Body
-  for (let bx = 10; bx <= 22; bx++)
-    for (let by = 12; by <= 22; by++)
-      d.push([bx, by, C.body])
-  // Belly
-  for (let bx = 11; bx <= 17; bx++)
-    for (let by = 17; by <= 22; by++)
-      d.push([bx, by, C.belly])
+  d.push([5, 7, O], [6, 7, C.bodyMid], [7, 7, C.bodyDk], [8, 7, C.belly], [9, 7, C.belly], [10, 7, C.bodyDk], [11, 7, O])
+  d.push([4, 8, O], [5, 8, C.body], [6, 8, C.bodyMid], [7, 8, C.bodyDk], [8, 8, C.bellyHi], [9, 8, C.belly], [10, 8, C.bodyDk], [11, 8, O])
+  d.push([4, 9, O], [5, 9, C.bodyMid], [6, 9, C.bodyDk], [7, 9, C.bodyDk], [8, 9, C.belly], [9, 9, C.bellyDk], [10, 9, C.bodyDk], [11, 9, O])
+  d.push([4, 10, O], [5, 10, C.bodyMid], [6, 10, C.bodyDk], [7, 10, C.bodyDk], [8, 10, C.bellyDk], [9, 10, C.bellyDk], [10, 10, C.bodyDkr], [11, 10, O])
 
-  // Wings (spread wide!)
+  // Wings spread!
   if (wingFlap === 0) {
     // Up
-    for (let wx = 20; wx <= 30; wx++) {
-      const wy = 6 - Math.floor((wx - 20) / 3)
-      d.push([wx, wy, C.wing], [wx, wy+1, C.wingMem], [wx, wy+2, C.wingMemDk])
-    }
-    for (let wx = 20; wx <= 28; wx++) d.push([wx, 5 - Math.floor((wx-20)/3), C.wingHi])
-    d.push([29, 3, C.wingDk], [30, 2, C.wingDk])
+    d.push([1, 3, O], [2, 3, O], [3, 4, O], [4, 5, O])
+    d.push([0, 4, O], [1, 4, C.wingOrange], [2, 4, C.wingOrange], [3, 5, C.wingOrange], [4, 6, C.wingRed])
+    d.push([0, 5, O], [1, 5, C.wingRed], [2, 5, C.wingRed], [3, 6, C.wingRed])
+    d.push([1, 6, O], [2, 6, O])
   } else if (wingFlap === 1) {
     // Mid
-    for (let wx = 20; wx <= 29; wx++) {
-      d.push([wx, 9, C.wing], [wx, 10, C.wingMem], [wx, 11, C.wingMemDk])
-    }
-    for (let wx = 20; wx <= 29; wx++) d.push([wx, 8, C.wingHi])
-    d.push([29, 8, C.wingDk], [30, 9, C.wingDk])
+    d.push([0, 6, O], [1, 6, O], [2, 6, O], [3, 6, O], [4, 6, O])
+    d.push([0, 7, O], [1, 7, C.wingOrange], [2, 7, C.wingOrange], [3, 7, C.wingOrange], [4, 7, C.wingRed])
+    d.push([0, 8, O], [1, 8, C.wingRed], [2, 8, C.wingRed], [3, 8, C.wingRed], [4, 8, O])
+    d.push([1, 9, O], [2, 9, O], [3, 9, O])
   } else {
     // Down
-    for (let wx = 20; wx <= 28; wx++) {
-      const wy = 10 + Math.floor((wx - 20) / 4)
-      d.push([wx, wy, C.wing], [wx, wy+1, C.wingMem], [wx, wy+2, C.wingMemDk])
-    }
-    for (let wx = 20; wx <= 28; wx++) d.push([wx, 9 + Math.floor((wx-20)/4), C.wingHi])
+    d.push([1, 8, O], [2, 8, O], [3, 8, O], [4, 8, O])
+    d.push([0, 9, O], [1, 9, C.wingOrange], [2, 9, C.wingOrange], [3, 9, C.wingRed], [4, 9, O])
+    d.push([0, 10, O], [1, 10, C.wingRed], [2, 10, C.wingRed], [3, 10, O])
+    d.push([1, 11, O], [2, 11, O])
   }
 
-  // Tail (up and energetic)
-  d.push([22, 19, C.body], [23, 18, C.bodyMid], [24, 17, C.bodyMid])
-  d.push([25, 16, C.bodyDk], [26, 15, C.bodyDk], [27, 14, C.hornDk])
-  d.push([27, 13, C.horn], [28, 13, C.horn], [28, 14, C.hornDk])
-  d.push([27, 15, C.horn])
+  // Legs stretched down
+  d.push([5, 11, O], [6, 11, C.bodyDk], [7, 11, O])
+  d.push([5, 12, O], [6, 12, C.bodyDk], [7, 12, O])
+  d.push([5, 13, C.hornBase], [6, 13, O], [7, 13, O])
 
-  // Legs (stretched down)
-  for (let ly = 22; ly <= 28; ly++) {
-    d.push([12, ly, C.bodyMid], [13, ly, C.body])
-    d.push([19, ly, C.bodyDk], [20, ly, C.bodyMid])
-  }
-  d.push([11, 29, C.clawHi], [12, 29, C.claw], [13, 29, C.claw], [14, 29, C.clawDk])
-  d.push([18, 29, C.clawHi], [19, 29, C.claw], [20, 29, C.claw], [21, 29, C.clawDk])
+  d.push([9, 11, O], [10, 11, C.bodyDkr], [11, 11, O])
+  d.push([9, 12, O], [10, 12, C.bodyDkr], [11, 12, O])
+  d.push([9, 13, O], [10, 13, C.hornBase], [11, 13, O])
 
-  // Fire breath!
+  // Tail up
+  d.push([3, 9, O], [4, 9, C.bodyMid])
+  d.push([2, 8, O], [3, 8, C.bodyDk])
+  d.push([1, 7, C.hornBase], [2, 7, O])
+
+  // Fire breath
   if (fireFrame < 3) {
-    const fireY = 11
-    d.push([4, fireY, C.fire1], [3, fireY, C.fire2], [2, fireY, C.fire3])
-    d.push([4, fireY+1, C.fire2], [3, fireY+1, C.fire3], [2, fireY+1, C.fire4])
-    d.push([1, fireY, C.fire3], [0, fireY, C.fire4])
-    d.push([1, fireY+1, C.fire2], [0, fireY+1, C.fire3])
+    d.push([12, 5, C.fire1], [13, 5, C.fire2], [14, 5, C.fire3])
+    d.push([12, 6, C.fire2], [13, 6, C.fire3], [14, 6, C.fire4])
     if (fireFrame < 2) {
-      d.push([4, fireY-1, C.fire1], [3, fireY-1, C.fire2])
-      d.push([4, fireY+2, C.fire2], [3, fireY+2, C.fire3])
-      d.push([-1, fireY, C.fire4], [-1, fireY+1, C.fire4])
+      d.push([15, 5, C.fire4], [15, 6, C.fire4])
+      d.push([12, 4, C.fire1], [13, 4, C.fire2])
     }
   }
-
-  // Spines
-  d.push([16, 3, C.hornHi], [16, 12, C.horn], [19, 11, C.hornHi])
 
   return d
 }
 
 function makePeekFrame(f: number): SpriteData {
   const blink = f % 16 < 2
+  const O = C.outline
   const d: SpriteData = []
 
-  // Only head + one claw visible (peeking from right side)
-  // Head
-  for (let hx = 14; hx <= 26; hx++)
-    for (let hy = 6; hy <= 16; hy++) {
-      if (hx < 16 && hy < 8) continue
-      d.push([hx, hy, C.body])
-    }
-  for (let hx = 16; hx <= 24; hx++) d.push([hx, 6, C.bodyHi])
-
+  // Just head + claw peeking from edge
   // Horns
-  d.push([19, 5, C.hornHi], [20, 4, C.horn], [21, 3, C.hornHi])
-  d.push([23, 5, C.hornHi], [24, 4, C.horn], [25, 3, C.hornHi])
+  d.push([7, 0, C.hornBase], [8, 0, C.hornTip])
+  d.push([10, 0, C.hornBase], [11, 0, C.hornTip])
 
-  // Eye (curious, looking left)
+  // Head
+  d.push([7, 1, O], [8, 1, O], [9, 1, O], [10, 1, O], [11, 1, O])
+  d.push([6, 2, O], [7, 2, C.bodyHi], [8, 2, C.bodyHi], [9, 2, C.bodyHi], [10, 2, C.bodyHi], [11, 2, O])
+  d.push([6, 3, O], [7, 3, C.bodyHi], [8, 3, C.body], [9, 3, C.body], [10, 3, C.body], [11, 3, C.body], [12, 3, O])
   if (!blink) {
-    for (let ex = 16; ex <= 20; ex++)
-      for (let ey = 9; ey <= 13; ey++)
-        d.push([ex, ey, C.eyeWhite])
-    d.push([17, 10, C.eyeIris], [18, 10, C.eyeIris])
-    d.push([17, 11, C.eyeIris], [18, 11, C.eyePupil])
-    d.push([17, 10, C.eyeShine])
-    d.push([16, 8, C.bodyDk], [17, 8, C.bodyDk], [18, 8, C.bodyDk], [19, 8, C.bodyDk], [20, 8, C.bodyDk])
+    d.push([6, 4, O], [7, 4, C.body], [8, 4, O], [9, 4, C.eyeIris], [10, 4, O], [11, 4, C.body], [12, 4, O])
+    d.push([9, 3, C.eyeShine])
   } else {
-    for (let ex = 16; ex <= 20; ex++) d.push([ex, 11, C.bodyDk])
+    d.push([6, 4, O], [7, 4, C.body], [8, 4, C.body], [9, 4, O], [10, 4, C.body], [11, 4, C.body], [12, 4, O])
   }
-
-  // Cheek
-  d.push([15, 13, C.cheek], [15, 14, C.cheek])
+  d.push([6, 5, O], [7, 5, C.body], [8, 5, C.body], [9, 5, C.body], [10, 5, C.bodyMid], [11, 5, C.bodyMid], [12, 5, O])
+  d.push([7, 6, O], [8, 6, O], [9, 6, O], [10, 6, O], [11, 6, O])
 
   // Claws gripping edge
-  for (let cy = 17; cy <= 22; cy++)
-    d.push([16, cy, C.body], [17, cy, C.bodyMid])
-  d.push([15, 17, C.clawHi], [15, 18, C.claw], [15, 19, C.claw])
-  d.push([18, 17, C.clawDk], [18, 18, C.clawDk])
-
-  // Spines
-  d.push([22, 5, C.hornHi])
+  d.push([8, 7, O], [9, 7, C.bodyMid], [10, 7, C.bodyDk], [11, 7, O])
+  d.push([8, 8, O], [9, 8, C.bodyDk], [10, 8, C.bodyDkr], [11, 8, O])
+  d.push([8, 9, C.hornBase], [9, 9, O], [10, 9, O], [11, 9, C.hornBase])
 
   return d
 }
