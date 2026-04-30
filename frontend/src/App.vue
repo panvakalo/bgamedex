@@ -51,7 +51,6 @@ const { active: fireworksActive, done: fireworksDone } = useFireworks()
 const { dialog: destructiveDialog, onConfirm, onCancel } = useDestructiveDialog()
 
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
-const mobileMenuOpen = ref(false)
 
 const navItems = [
   { to: '/', label: 'Games', iconId: 'dice', exact: true },
@@ -153,72 +152,22 @@ function isActive(item: typeof navItems[number]): boolean {
           <img :src="logoUrl" alt="Bgamedex" class="h-8" />
           <span class="text-xl font-bold text-text-primary tracking-tight font-display"><span class="text-accent-light">Bgame</span>dex</span>
         </RouterLink>
-        <button
-          class="flex items-center justify-center w-9 h-9 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-lighter transition-colors"
-          @click="mobileMenuOpen = !mobileMenuOpen"
-        >
-          <PixelIcon :name="mobileMenuOpen ? 'close' : 'menu'" :size="18" />
-        </button>
-      </div>
-
-      <!-- Mobile dropdown menu -->
-      <nav v-if="mobileMenuOpen" class="border-t border-surface-lighter bg-surface px-4 py-3 space-y-1">
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
-          :class="isActive(item)
-            ? 'bg-accent/15 text-accent-light font-medium'
-            : 'text-text-secondary hover:text-text-primary hover:bg-surface-lighter'"
-          @click="mobileMenuOpen = false"
-        >
-          <PixelIcon :name="item.iconId" :size="18" />
-          {{ item.label }}
-          <span
-            v-if="item.to === '/friends' && pendingCount > 0"
-            class="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none"
-          >
-            {{ pendingCount > 9 ? '9+' : pendingCount }}
-          </span>
-        </RouterLink>
-
-        <div class="border-t border-surface-lighter my-2" />
-
         <RouterLink
           to="/account"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-text-secondary hover:text-text-primary hover:bg-surface-lighter transition-colors"
-          @click="mobileMenuOpen = false"
+          class="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-surface-lighter transition-colors"
         >
           <img
             v-if="userPicture"
             :src="userPicture"
             :alt="user.name"
-            class="w-5 h-5 rounded-full object-cover"
+            class="w-7 h-7 rounded-full object-cover"
             referrerpolicy="no-referrer"
           />
-          <div v-else class="w-5 h-5 rounded-full bg-accent/20 text-accent-light flex items-center justify-center text-[10px] font-medium">
+          <div v-else class="w-7 h-7 rounded-full bg-accent/20 text-accent-light flex items-center justify-center text-xs font-medium">
             {{ user.name?.charAt(0)?.toUpperCase() || '?' }}
           </div>
-          Account
         </RouterLink>
-
-        <div class="flex items-center justify-between px-3 py-2.5">
-          <button
-            class="flex items-center gap-3 text-sm text-text-muted hover:text-text-primary transition-colors"
-            @click="toggleTheme"
-          >
-            <PixelIcon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
-            {{ theme === 'dark' ? 'Light mode' : 'Dark mode' }}
-          </button>
-          <button
-            class="text-sm text-text-muted hover:text-text-primary transition-colors"
-            @click="logout().then(() => $router.push('/login'))"
-          >
-            Sign out
-          </button>
-        </div>
-      </nav>
+      </div>
     </header>
 
     <!-- Email verification banner -->
@@ -277,13 +226,45 @@ function isActive(item: typeof navItems[number]): boolean {
     </div>
 
     <!-- Main content area -->
-    <div :class="isAuthenticated && user && !isAdminRoute ? 'md:ml-16' : ''">
+    <div :class="[
+      isAuthenticated && user && !isAdminRoute ? 'md:ml-16' : '',
+      isAuthenticated && user && !isAdminRoute ? 'pb-16 md:pb-0' : '',
+    ]">
       <RouterView v-slot="{ Component }">
         <KeepAlive include="HomeView">
           <component :is="Component" />
         </KeepAlive>
       </RouterView>
     </div>
+
+    <!-- Mobile bottom tab bar -->
+    <nav
+      v-if="isAuthenticated && user && !isAdminRoute"
+      class="fixed bottom-0 inset-x-0 z-20 md:hidden bg-surface border-t-2 border-surface-lighter"
+    >
+      <div class="flex items-center justify-around h-14">
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="relative flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-colors"
+          :class="isActive(item)
+            ? 'text-accent-light'
+            : 'text-text-muted'"
+        >
+          <span class="relative">
+            <PixelIcon :name="item.iconId" :size="18" />
+            <span
+              v-if="item.to === '/friends' && pendingCount > 0"
+              class="absolute -top-1.5 -right-2.5 flex items-center justify-center min-w-[14px] h-3.5 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none"
+            >
+              {{ pendingCount > 9 ? '9+' : pendingCount }}
+            </span>
+          </span>
+          <span class="text-[10px] font-display leading-none">{{ item.label }}</span>
+        </RouterLink>
+      </div>
+    </nav>
 
     <PixelDragon />
     <NotificationList />
