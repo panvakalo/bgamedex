@@ -19,25 +19,51 @@
   --font-serif: 'Press Start 2P', monospace;
 }
 
-/* ─── Light palette: warm parchment with rich shading tones ─── */
+/*
+ * PALETTE SYSTEM
+ *
+ * Base hue: warm slate-blue (220°)
+ * Surface:  warm parchment tones (desaturated amber, 35°)
+ * Accent:   teal-blue (200°) — single interactive color
+ * Semantic: all derived from the same warm-cool axis
+ *   - "purple" badge → indigo (245°, the cool end)
+ *   - "blue" badge   → accent teal shifted slightly (210°)
+ *   - "green" badge  → warm teal (170°)
+ *   - "amber" badge  → warm gold (40°, the warm end)
+ *   - positive       → warm teal (same family as green badge)
+ *   - negative       → desaturated brick (10°, warm, not neon)
+ * Text:     warm slate desaturated from the base hue
+ *
+ * Each color has 3 stops: hi (highlight), base, dk (shadow)
+ */
+
 :root {
-  --theme-surface: #e8dcc4;
-  --theme-surface-light: #f5f0e4;
-  --theme-surface-lighter: #d4c8b0;
-  --theme-accent: #2848e8;
-  --theme-accent-light: #4060ff;
-  --theme-accent-hi: #6888ff;
-  --theme-accent-dk: #1830a8;
-  --theme-accent2: #e83020;
-  --theme-accent2-light: #ff4838;
-  --theme-text-primary: #1a1028;
-  --theme-text-secondary: #4a3860;
-  --theme-text-muted: #8878a0;
-  --theme-positive: #18b838;
-  --theme-positive-hi: #48e868;
-  --theme-positive-dk: #108828;
-  --theme-negative: #e82020;
-  --theme-negative-hi: #ff5050;
+  /* Surface: warm parchment (game table wood) */
+  --theme-surface: #e4dace;
+  --theme-surface-light: #f2ede4;
+  --theme-surface-lighter: #d0c8ba;
+
+  /* Accent: teal-blue — the one interactive color */
+  --theme-accent: #2e7ca8;
+  --theme-accent-light: #3a90c0;
+  --theme-accent-hi: #5ab0d8;
+  --theme-accent-dk: #1e5c80;
+
+  /* Accent2: warm terracotta (same temperature as surface) */
+  --theme-accent2: #b85838;
+  --theme-accent2-light: #d06848;
+
+  /* Text: warm slate family */
+  --theme-text-primary: #2a2420;
+  --theme-text-secondary: #5c5248;
+  --theme-text-muted: #948878;
+
+  /* Semantic: warm teal positive, brick negative */
+  --theme-positive: #3a9878;
+  --theme-positive-hi: #58b898;
+  --theme-positive-dk: #287060;
+  --theme-negative: #b84038;
+  --theme-negative-hi: #d06058;
 
   --shadow-card: none;
   --shadow-card-hover: none;
@@ -45,70 +71,80 @@
   --shadow-filter-bar: none;
   --shadow-sidebar: none;
 
-  --glass-bg: rgba(240, 232, 216, 0.95);
+  --glass-bg: rgba(228, 218, 206, 0.95);
   --glass-blur: 0px;
-  --glass-border: #1a1028;
+  --glass-border: #2a2420;
   --theme-grain-opacity: 0;
 
-  /* Shading: each badge gets highlight + base + shadow */
-  --badge-purple-hi: #c070ff;
-  --badge-purple-bg: #9840e8;
-  --badge-purple-dk: #6820b0;
-  --badge-purple-text: #fff;
-  --badge-purple-border: #1a1028;
-  --badge-green-hi: #48e868;
-  --badge-green-bg: #18b838;
-  --badge-green-dk: #108828;
-  --badge-green-text: #fff;
-  --badge-green-border: #1a1028;
-  --badge-blue-hi: #68b8ff;
-  --badge-blue-bg: #2878f0;
-  --badge-blue-dk: #1850b8;
-  --badge-blue-text: #fff;
-  --badge-blue-border: #1a1028;
-  --badge-amber-hi: #ffe040;
-  --badge-amber-bg: #f0a800;
-  --badge-amber-dk: #c08000;
-  --badge-amber-text: #1a1028;
-  --badge-amber-border: #1a1028;
+  /* Badges: tonal steps along the warm→cool axis */
+  --badge-purple-hi: #8080c0;
+  --badge-purple-bg: #605898;
+  --badge-purple-dk: #484070;
+  --badge-purple-text: #f2ede4;
+  --badge-purple-border: #2a2420;
 
-  --sidebar-bg: #dcd0b8;
-  --sidebar-hi: #f0e8d8;
-  --sidebar-dk: #c0b498;
+  --badge-green-hi: #58b898;
+  --badge-green-bg: #3a9878;
+  --badge-green-dk: #287060;
+  --badge-green-text: #f2ede4;
+  --badge-green-border: #2a2420;
 
-  /* Multi-pass border colors for 3D pixel panels */
-  --panel-border-outer: #1a1028;
-  --panel-hi-outer: #f8f4ec;
-  --panel-hi-inner: #e8e0d0;
-  --panel-dk-inner: #c0b498;
-  --panel-dk-outer: #a09078;
+  --badge-blue-hi: #5ab0d8;
+  --badge-blue-bg: #2e7ca8;
+  --badge-blue-dk: #1e5c80;
+  --badge-blue-text: #f2ede4;
+  --badge-blue-border: #2a2420;
 
-  --pixel-border: 3px solid #1a1028;
+  --badge-amber-hi: #e8c868;
+  --badge-amber-bg: #c8a040;
+  --badge-amber-dk: #a07828;
+  --badge-amber-text: #2a2420;
+  --badge-amber-border: #2a2420;
 
-  /* Dither pattern for background */
-  --dither-color-a: #e8dcc4;
-  --dither-color-b: #e0d4b8;
+  /* Sidebar: slightly deeper parchment */
+  --sidebar-bg: #d8cec0;
+  --sidebar-hi: #ece4d8;
+  --sidebar-dk: #c0b4a4;
+
+  /* Panel bevel: warm slate tones */
+  --panel-border-outer: #2a2420;
+  --panel-hi-outer: #f4f0ea;
+  --panel-hi-inner: #e4dcd0;
+  --panel-dk-inner: #c0b4a4;
+  --panel-dk-outer: #a09488;
+
+  --pixel-border: 3px solid #2a2420;
+
+  --dither-color-a: #e4dace;
+  --dither-color-b: #dcd2c4;
 }
 
-/* ─── Dark palette: deep indigo with neon highlights ─── */
 :root.dark {
-  --theme-surface: #0c0820;
-  --theme-surface-light: #161038;
-  --theme-surface-lighter: #281c50;
-  --theme-accent: #58a0ff;
-  --theme-accent-light: #78c0ff;
-  --theme-accent-hi: #a0d8ff;
-  --theme-accent-dk: #3070c8;
-  --theme-accent2: #ff6848;
-  --theme-accent2-light: #ff8868;
-  --theme-text-primary: #f0e8ff;
-  --theme-text-secondary: #b8a8d8;
-  --theme-text-muted: #685888;
-  --theme-positive: #48e858;
-  --theme-positive-hi: #78ff88;
-  --theme-positive-dk: #28b838;
-  --theme-negative: #ff3838;
-  --theme-negative-hi: #ff6868;
+  /* Surface: deep navy-slate (same hue as accent, very dark) */
+  --theme-surface: #141820;
+  --theme-surface-light: #1c2230;
+  --theme-surface-lighter: #2a3040;
+
+  /* Accent: brighter teal for dark mode contrast */
+  --theme-accent: #50a8d0;
+  --theme-accent-light: #68c0e8;
+  --theme-accent-hi: #88d0f0;
+  --theme-accent-dk: #387898;
+
+  --theme-accent2: #d87858;
+  --theme-accent2-light: #e89878;
+
+  /* Text: cool slate matching the surface hue */
+  --theme-text-primary: #e0dcd8;
+  --theme-text-secondary: #a09890;
+  --theme-text-muted: #605858;
+
+  /* Semantic */
+  --theme-positive: #58b898;
+  --theme-positive-hi: #78d0b0;
+  --theme-positive-dk: #409080;
+  --theme-negative: #c85848;
+  --theme-negative-hi: #e07868;
 
   --shadow-card: none;
   --shadow-card-hover: none;
@@ -116,46 +152,50 @@
   --shadow-filter-bar: none;
   --shadow-sidebar: none;
 
-  --glass-bg: rgba(12, 8, 32, 0.95);
+  --glass-bg: rgba(20, 24, 32, 0.95);
   --glass-blur: 0px;
-  --glass-border: #f0e8ff;
+  --glass-border: #a09890;
   --theme-grain-opacity: 0;
 
-  --badge-purple-hi: #d080ff;
-  --badge-purple-bg: #b050ff;
-  --badge-purple-dk: #8030c8;
-  --badge-purple-text: #f0e8ff;
-  --badge-purple-border: #f0e8ff;
-  --badge-green-hi: #78ff88;
-  --badge-green-bg: #48e858;
-  --badge-green-dk: #28b838;
-  --badge-green-text: #0c0820;
-  --badge-green-border: #f0e8ff;
-  --badge-blue-hi: #a0d0ff;
-  --badge-blue-bg: #58a0ff;
-  --badge-blue-dk: #3070c8;
-  --badge-blue-text: #0c0820;
-  --badge-blue-border: #f0e8ff;
-  --badge-amber-hi: #ffe868;
-  --badge-amber-bg: #ffc020;
-  --badge-amber-dk: #d09800;
-  --badge-amber-text: #0c0820;
-  --badge-amber-border: #f0e8ff;
+  /* Badges: same tonal concept, lifted for dark bg */
+  --badge-purple-hi: #9898d0;
+  --badge-purple-bg: #7070b0;
+  --badge-purple-dk: #505088;
+  --badge-purple-text: #e0dcd8;
+  --badge-purple-border: #a09890;
 
-  --sidebar-bg: #080618;
-  --sidebar-hi: #201848;
-  --sidebar-dk: #040310;
+  --badge-green-hi: #78d0b0;
+  --badge-green-bg: #58b898;
+  --badge-green-dk: #409080;
+  --badge-green-text: #141820;
+  --badge-green-border: #a09890;
 
-  --panel-border-outer: #b8a8d8;
-  --panel-hi-outer: #382860;
-  --panel-hi-inner: #281c50;
-  --panel-dk-inner: #0c0820;
-  --panel-dk-outer: #060410;
+  --badge-blue-hi: #88d0f0;
+  --badge-blue-bg: #50a8d0;
+  --badge-blue-dk: #387898;
+  --badge-blue-text: #141820;
+  --badge-blue-border: #a09890;
 
-  --pixel-border: 3px solid #b8a8d8;
+  --badge-amber-hi: #e8d078;
+  --badge-amber-bg: #c8a850;
+  --badge-amber-dk: #a88838;
+  --badge-amber-text: #141820;
+  --badge-amber-border: #a09890;
 
-  --dither-color-a: #0c0820;
-  --dither-color-b: #100c28;
+  --sidebar-bg: #101418;
+  --sidebar-hi: #283040;
+  --sidebar-dk: #0c1014;
+
+  --panel-border-outer: #a09890;
+  --panel-hi-outer: #303840;
+  --panel-hi-inner: #242c38;
+  --panel-dk-inner: #101418;
+  --panel-dk-outer: #0c1014;
+
+  --pixel-border: 3px solid #a09890;
+
+  --dither-color-a: #141820;
+  --dither-color-b: #181c28;
 }
 
 /* ─── Base ─── */
