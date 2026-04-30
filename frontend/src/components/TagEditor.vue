@@ -84,6 +84,7 @@ function handleBlur() {
         v-for="tag in modelValue"
         :key="tag.id"
         class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-accent/20 text-accent-light"
+        data-dragon-target
       >
         {{ tag.name }}
         <button
@@ -105,6 +106,7 @@ function handleBlur() {
         type="text"
         placeholder="Add a tag..."
         class="w-full h-9 px-3 rounded-lg bg-surface-lighter border border-surface-lighter text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
+        data-dragon-target
         @focus="handleFocus"
         @blur="handleBlur"
         @keydown="handleKeydown"

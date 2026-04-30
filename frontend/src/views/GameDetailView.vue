@@ -347,6 +347,7 @@ onMounted(async () => {
             v-for="mechanic in game.mechanics"
             :key="mechanic"
             class="px-3 py-1 rounded-full text-sm bg-surface-lighter text-text-secondary border border-surface-lighter"
+            data-dragon-target
           >
             {{ mechanic }}
           </span>

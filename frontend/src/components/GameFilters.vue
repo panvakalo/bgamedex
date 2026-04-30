@@ -52,7 +52,7 @@ function parseNumInput(e: Event): number | null {
 <template>
   <div>
     <!-- Top row: filter toggle + actions -->
-    <div class="glass-surface flex items-center gap-3 px-4 py-2.5 rounded-xl">
+    <div class="glass-surface flex items-center gap-3 px-4 py-2.5 rounded-xl" style="box-shadow: none">
       <!-- Filter toggle button -->
       <button
         class="flex-shrink-0 relative h-9 flex items-center gap-1.5 px-3 rounded-lg border border-surface-lighter text-text-muted hover:text-text-primary hover:border-text-muted transition-colors"
