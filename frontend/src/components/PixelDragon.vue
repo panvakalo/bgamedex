@@ -9,7 +9,7 @@ const H = SPRITE_H * SCALE
 const GROUND_OFFSET = 8
 const FLOOR_Y = () => window.innerHeight - H - GROUND_OFFSET
 
-type DragonState = 'idle' | 'walk' | 'sit' | 'jump' | 'sleep' | 'peek'
+type DragonState = 'idle' | 'walk' | 'sit' | 'jump' | 'sleep' | 'peek' | 'dragged'
 
 const x = ref(100)
 const y = ref(FLOOR_Y())
@@ -23,6 +23,13 @@ const sittingOnEl = ref<Element | null>(null)
 const jumpVY = ref(0)
 const isJumping = ref(false)
 const stateTimer = ref(0)
+
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartY = ref(0)
+const dragOffsetX = ref(0)
+const dragOffsetY = ref(0)
+const didDrag = ref(false)
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 
@@ -508,6 +515,7 @@ function render() {
     case 'sit': spriteData = makeSitFrame(frame.value); break
     case 'sleep': spriteData = makeSleepFrame(frame.value); break
     case 'jump': spriteData = makeJumpFrame(frame.value); break
+    case 'dragged': spriteData = makeJumpFrame(frame.value); break
     case 'peek': spriteData = makePeekFrame(frame.value); break
   }
 
@@ -670,11 +678,113 @@ function tick() {
       }
       break
     }
+
+    case 'dragged': {
+      break
+    }
   }
 
   x.value = Math.max(-10, Math.min(window.innerWidth - W + 10, x.value))
   render()
   tickId = requestAnimationFrame(tick)
+}
+
+function findDropTarget(): { el: Element; rect: DOMRect } | null {
+  const dragonCenterX = x.value + W / 2
+  const dragonBottom = y.value + H
+  const candidates = [
+    ...document.querySelectorAll('.card-tactile'),
+    ...document.querySelectorAll('.fab-play'),
+    ...document.querySelectorAll('[data-dragon-target]'),
+  ]
+
+  let best: { el: Element; rect: DOMRect; dist: number } | null = null
+  const MAX_DIST = 200
+
+  for (const el of candidates) {
+    const r = el.getBoundingClientRect()
+    if (r.width === 0 || r.height === 0) continue
+    const elCenterX = r.left + r.width / 2
+    const elTop = r.top
+    const dx = dragonCenterX - elCenterX
+    const dy = dragonBottom - elTop
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist < MAX_DIST && (!best || dist < best.dist)) {
+      best = { el, rect: r, dist }
+    }
+  }
+
+  return best ? { el: best.el, rect: best.rect } : null
+}
+
+function getPointerPos(e: MouseEvent | TouchEvent): { px: number; py: number } {
+  if ('touches' in e) {
+    return { px: e.touches[0].clientX, py: e.touches[0].clientY }
+  }
+  return { px: e.clientX, py: e.clientY }
+}
+
+const DRAG_THRESHOLD = 5
+
+function handleDragStart(e: MouseEvent | TouchEvent) {
+  e.preventDefault()
+  const { px, py } = getPointerPos(e)
+  dragOffsetX.value = px - x.value
+  dragOffsetY.value = py - y.value
+  dragStartX.value = px
+  dragStartY.value = py
+  isDragging.value = true
+  didDrag.value = false
+  sittingOnEl.value = null
+  window.addEventListener('mousemove', handleDragMove)
+  window.addEventListener('mouseup', handleDragEnd)
+  window.addEventListener('touchmove', handleDragMove, { passive: false })
+  window.addEventListener('touchend', handleDragEnd)
+}
+
+function handleDragMove(e: MouseEvent | TouchEvent) {
+  if (!isDragging.value) return
+  e.preventDefault()
+  const { px, py } = getPointerPos(e)
+
+  if (!didDrag.value) {
+    const dx = px - dragStartX.value
+    const dy = py - dragStartY.value
+    if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return
+    didDrag.value = true
+    state.value = 'dragged'
+  }
+
+  x.value = px - dragOffsetX.value
+  y.value = py - dragOffsetY.value
+}
+
+function handleDragEnd() {
+  if (!isDragging.value) return
+  isDragging.value = false
+  window.removeEventListener('mousemove', handleDragMove)
+  window.removeEventListener('mouseup', handleDragEnd)
+  window.removeEventListener('touchmove', handleDragMove)
+  window.removeEventListener('touchend', handleDragEnd)
+
+  if (!didDrag.value) {
+    handleClick()
+    return
+  }
+
+  const target = findDropTarget()
+  if (target) {
+    const rect = target.rect
+    state.value = 'sit'
+    x.value = rect.left + rect.width / 2 - W / 2
+    y.value = rect.top - H + 4
+    sittingOnEl.value = target.el
+    stateTimer.value = 150 + Math.floor(Math.random() * 100)
+  } else {
+    state.value = 'jump'
+    isJumping.value = true
+    jumpVY.value = 0
+  }
 }
 
 function handleClick() {
@@ -685,7 +795,7 @@ function handleClick() {
     y.value = FLOOR_Y()
     return
   }
-  if (!isJumping.value) {
+  if (!isJumping.value && !isDragging.value) {
     state.value = 'jump'
     isJumping.value = true
     jumpVY.value = -10
@@ -693,7 +803,7 @@ function handleClick() {
 }
 
 function handleResize() {
-  y.value = FLOOR_Y()
+  if (!isDragging.value) y.value = FLOOR_Y()
 }
 
 onMounted(() => {
@@ -707,6 +817,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (tickId !== null) cancelAnimationFrame(tickId)
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('mousemove', handleDragMove)
+  window.removeEventListener('mouseup', handleDragEnd)
+  window.removeEventListener('touchmove', handleDragMove)
+  window.removeEventListener('touchend', handleDragEnd)
 })
 
 const style = computed(() => ({
@@ -714,7 +828,7 @@ const style = computed(() => ({
   left: `${x.value}px`,
   top: `${y.value}px`,
   zIndex: 9999,
-  cursor: 'pointer',
+  cursor: isDragging.value ? 'grabbing' : 'grab',
   imageRendering: 'pixelated' as const,
   pointerEvents: 'auto' as const,
 }))
@@ -727,6 +841,7 @@ const style = computed(() => ({
     :width="W"
     :height="H"
     :style="style"
-    @click="handleClick"
+    @mousedown="handleDragStart"
+    @touchstart="handleDragStart"
   />
 </template>
