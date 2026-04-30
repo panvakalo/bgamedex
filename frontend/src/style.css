@@ -15,8 +15,8 @@
   --color-negative: var(--theme-negative);
 
   --font-display: 'Press Start 2P', monospace;
-  --font-body: 'Press Start 2P', monospace;
-  --font-serif: 'Press Start 2P', monospace;
+  --font-body: 'Silkscreen', 'Press Start 2P', monospace;
+  --font-serif: 'Silkscreen', 'Press Start 2P', monospace;
 }
 
 /*
@@ -204,8 +204,8 @@ body {
   background-color: var(--color-surface);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 10px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.6;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
   letter-spacing: 0;
@@ -274,7 +274,7 @@ input[type="search"],
 select,
 textarea {
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: 13px;
   border: 2px solid var(--panel-border-outer);
   background: var(--color-surface-light);
   box-shadow:

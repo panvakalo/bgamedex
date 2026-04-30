@@ -54,7 +54,7 @@ async function handleSubmit() {
     <div class="w-full max-w-sm mx-4">
       <!-- Loading -->
       <template v-if="status === 'loading'">
-        <div class="text-center">
+        <div class="glass-surface p-6 text-center">
           <div class="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-4" />
           <p class="text-text-secondary">Resetting your password...</p>
         </div>
@@ -62,8 +62,8 @@ async function handleSubmit() {
 
       <!-- Success -->
       <template v-else-if="status === 'success'">
-        <div class="text-center">
-          <div class="w-12 h-12 rounded-full bg-positive/20 flex items-center justify-center mx-auto mb-4">
+        <div class="glass-surface p-6 text-center">
+          <div class="w-12 h-12 bg-positive/20 flex items-center justify-center mx-auto mb-4">
             <svg class="w-6 h-6 text-positive" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
@@ -75,8 +75,8 @@ async function handleSubmit() {
 
       <!-- Error (no token) -->
       <template v-else-if="status === 'error'">
-        <div class="text-center">
-          <div class="w-12 h-12 rounded-full bg-negative/20 flex items-center justify-center mx-auto mb-4">
+        <div class="glass-surface p-6 text-center">
+          <div class="w-12 h-12 bg-negative/20 flex items-center justify-center mx-auto mb-4">
             <svg class="w-6 h-6 text-negative" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -85,7 +85,7 @@ async function handleSubmit() {
           <p class="text-text-secondary mb-6">{{ errorMessage }}</p>
           <RouterLink
             to="/login"
-            class="px-6 py-2 rounded-lg bg-accent hover:bg-accent-light text-white font-medium transition-colors"
+            class="inline-block px-6 py-2 bg-accent hover:bg-accent-light text-white font-medium border-2 border-accent"
           >
             Back to sign in
           </RouterLink>
@@ -99,43 +99,45 @@ async function handleSubmit() {
           <p class="text-text-secondary">Enter your new password below.</p>
         </div>
 
-        <div v-if="errorMessage" class="mb-6 px-4 py-3 rounded-lg bg-negative/10 border border-negative/30 text-negative text-sm">
-          {{ errorMessage }}
+        <div class="glass-surface p-6">
+          <div v-if="errorMessage" class="mb-4 px-3 py-2 bg-negative/10 border-2 border-negative/30 text-negative text-sm">
+            {{ errorMessage }}
+          </div>
+
+          <form class="space-y-4" @submit.prevent="handleSubmit">
+            <div>
+              <input
+                v-model="password"
+                type="password"
+                placeholder="New password"
+                required
+                :minlength="12"
+                class="w-full px-3 py-2.5 bg-surface-light text-text-primary placeholder:text-text-muted focus:outline-none"
+              />
+            </div>
+            <div>
+              <input
+                v-model="confirmPassword"
+                type="password"
+                placeholder="Confirm new password"
+                required
+                :minlength="12"
+                class="w-full px-3 py-2.5 bg-surface-light text-text-primary placeholder:text-text-muted focus:outline-none"
+              />
+            </div>
+            <p class="text-xs text-text-muted">Minimum 12 characters</p>
+            <button
+              type="submit"
+              class="w-full py-2.5 bg-accent hover:bg-accent-light text-white font-medium border-2 border-accent"
+            >
+              Reset password
+            </button>
+          </form>
+
+          <p class="text-center text-sm text-text-muted mt-4">
+            <RouterLink to="/login" class="text-accent-light hover:underline">Back to sign in</RouterLink>
+          </p>
         </div>
-
-        <form class="space-y-4" @submit.prevent="handleSubmit">
-          <div>
-            <input
-              v-model="password"
-              type="password"
-              placeholder="New password"
-              required
-              :minlength="12"
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-            />
-          </div>
-          <div>
-            <input
-              v-model="confirmPassword"
-              type="password"
-              placeholder="Confirm new password"
-              required
-              :minlength="12"
-              class="w-full px-4 py-3 rounded-lg bg-surface-light border border-surface-lighter text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-            />
-          </div>
-          <p class="text-xs text-text-muted">Minimum 12 characters</p>
-          <button
-            type="submit"
-            class="w-full py-3 rounded-lg bg-accent hover:bg-accent-light text-white font-medium transition-colors"
-          >
-            Reset password
-          </button>
-        </form>
-
-        <p class="text-center text-sm text-text-muted mt-6">
-          <RouterLink to="/login" class="text-accent-light hover:underline">Back to sign in</RouterLink>
-        </p>
       </template>
     </div>
   </main>
