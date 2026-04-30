@@ -129,7 +129,7 @@ onActivated(() => {
 
     <!-- Branch 3: Normal view (has games) -->
     <template v-else>
-      <div class="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-6 border-b-4 border-text-primary bg-surface">
+      <div class="sticky top-0 z-10 -mx-4 sm:-mx-6 mb-6 border-b-4 border-text-primary bg-surface">
         <GameFilters v-model="filters" :has-active-filters="hasActiveFilters" :tags="tags" @clear="clearFilters">
           <template #actions>
             <button
