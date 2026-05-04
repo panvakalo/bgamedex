@@ -32,8 +32,10 @@ interface GameRow {
   bgg_id: number | null
 }
 
+const MAX_PDF_BYTES = 20 * 1024 * 1024
 const upload = multer({
   storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_PDF_BYTES },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype !== 'application/pdf') {
       cb(new Error('Only PDF files are accepted'))
@@ -160,6 +162,10 @@ function hasRulesAccess(db: ReturnType<typeof getDb>, userId: number): boolean {
 router.post('/:id/upload-rules', (req: Request, res: Response, next) => {
   upload.single('pdf')(req, res, (err) => {
     if (err) {
+      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        res.status(413).json({ error: `PDF must be ${MAX_PDF_BYTES / (1024 * 1024)}MB or smaller` })
+        return
+      }
       res.status(400).json({ error: err.message })
       return
     }

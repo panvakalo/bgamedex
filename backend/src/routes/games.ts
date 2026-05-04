@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import OpenAI from 'openai'
 import multer from 'multer'
+import rateLimit from 'express-rate-limit'
 import { getDb } from '../database.js'
 import { searchBggMultiple, fetchBggThing, fetchBggThumbnail, fetchBggRulesFiles, classifyGame } from '../bgg.js'
 
@@ -14,6 +15,15 @@ const upload = multer({
     }
     cb(null, true)
   },
+})
+
+// Throttles paid OpenAI Vision calls (per IP)
+const photoIdentifyLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many photo identifications, please slow down' },
 })
 
 const router = Router()
@@ -33,7 +43,7 @@ router.get('/search-bgg', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/identify-from-photo', upload.single('photo'), async (req: Request, res: Response) => {
+router.post('/identify-from-photo', photoIdentifyLimiter, upload.single('photo'), async (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).json({ error: 'No image file provided' })
     return

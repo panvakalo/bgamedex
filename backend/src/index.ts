@@ -1,4 +1,6 @@
 import 'dotenv/config'
+import crypto from 'crypto'
+import fs from 'fs'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -45,11 +47,20 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' })
 })
 
+app.use((_req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64')
+  next()
+})
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: [
+        "'self'",
+        "'strict-dynamic'",
+        (_req, res) => `'nonce-${(res as express.Response).locals.cspNonce}'`,
+      ],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
@@ -184,10 +195,27 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 })
 
 const frontendDist = path.join(__dirname, '..', 'public')
-app.use(express.static(frontendDist))
-app.get('*', (_req, res, next) => {
-  if (_req.path.startsWith('/api')) return next()
-  res.sendFile(path.join(frontendDist, 'index.html'))
+const indexHtmlPath = path.join(frontendDist, 'index.html')
+let indexHtmlTemplate: string | null = null
+try {
+  indexHtmlTemplate = fs.readFileSync(indexHtmlPath, 'utf8')
+} catch { /* dev mode without a built frontend */ }
+
+function serveIndexHtml(_req: express.Request, res: express.Response) {
+  if (!indexHtmlTemplate) {
+    res.sendFile(indexHtmlPath)
+    return
+  }
+  const nonce = res.locals.cspNonce as string
+  const html = indexHtmlTemplate.replace(/<script(\s|>)/g, `<script nonce="${nonce}"$1`)
+  res.type('html').send(html)
+}
+
+app.use(express.static(frontendDist, { index: false }))
+app.get('/', serveIndexHtml)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next()
+  serveIndexHtml(req, res)
 })
 
 if (!process.env.RESEND_API_KEY) {

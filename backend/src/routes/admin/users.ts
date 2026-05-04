@@ -187,8 +187,6 @@ router.delete('/:id', (req: Request, res: Response) => {
       const placeholders = gameIds.map(() => '?').join(',')
       db.prepare(`DELETE FROM game_tags WHERE game_id IN (${placeholders})`).run(...gameIds)
       db.prepare(`DELETE FROM game_mechanics WHERE game_id IN (${placeholders})`).run(...gameIds)
-      db.prepare(`DELETE FROM game_prices WHERE game_id IN (${placeholders})`).run(...gameIds)
-      db.prepare(`DELETE FROM rules_chunks WHERE game_id IN (${placeholders})`).run(...gameIds)
     }
 
     db.prepare('DELETE FROM plays WHERE user_id = ?').run(id)
