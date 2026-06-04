@@ -10,6 +10,10 @@ import { storeRulesChunks, searchRulesChunks } from '../rules-chunker.js'
 const MAX_MESSAGES = 50
 const MAX_MESSAGE_LENGTH = 5000
 const MAX_EXTRACTED_TEXT_LENGTH = 500_000
+// Cap how much raw rules text we inject when RAG chunks are unavailable.
+// ~48k chars ≈ 12k tokens — keeps the worst-case prompt bounded so a long
+// chat over a large rulebook can't balloon to dollars-per-message.
+const MAX_FALLBACK_RULES_CHARS = 48_000
 const UPLOAD_RATE_LIMIT = 3
 const UPLOAD_RATE_WINDOW_MS = 60 * 60 * 1000
 const UPLOAD_COOLDOWN_MS = 60 * 60 * 1000
@@ -409,7 +413,15 @@ router.post('/:id/chat', async (req: Request, res: Response) => {
     if (!fullRulesText) fullRulesText = game.rules_text
 
     if (fullRulesText) {
-      gameContext = `<rules>\n${fullRulesText}\n</rules>`
+      // Bound the worst case: large rulebooks without embeddings would
+      // otherwise be re-sent in full on every turn. Truncation is a safety
+      // net — embeddings (RAG path above) are the intended retrieval mechanism.
+      const truncated = fullRulesText.length > MAX_FALLBACK_RULES_CHARS
+      const rulesText = truncated ? fullRulesText.slice(0, MAX_FALLBACK_RULES_CHARS) : fullRulesText
+      if (truncated) {
+        console.warn(`[chat] full-rules fallback truncated for bgg_id=${game.bgg_id} (${fullRulesText.length} → ${MAX_FALLBACK_RULES_CHARS} chars); embeddings missing`)
+      }
+      gameContext = `<rules>\n${rulesText}\n</rules>`
     } else if (game.description) {
       const mechanicsList = mechanics.map((m) => m.name).join(', ')
       gameContext = `GAME DESCRIPTION:\n---\n${game.description}\n---`

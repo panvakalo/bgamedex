@@ -181,10 +181,15 @@ app.get('/api/events', requireAuth, (req, res) => {
     res.write(': heartbeat\n\n')
   }, 30_000)
 
+  // Force-close after 4h so zombie connections (sleeping tabs, dropped clients)
+  // don't accumulate. The browser's EventSource auto-reconnects.
+  const maxAge = setTimeout(() => res.end(), 4 * 60 * 60 * 1000)
+
   addClient(req.user!.sub, res)
 
   req.on('close', () => {
     clearInterval(heartbeat)
+    clearTimeout(maxAge)
   })
 })
 

@@ -11,17 +11,27 @@ primary_region = 'ams'
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'stop'
+  # Launch tier: keep one machine warm so users never eat a cold start.
+  # auto_stop stays off until the app is multi-machine-safe (see SCALE.md) —
+  # with in-memory rate limits / OAuth state, a 2nd machine would be unsafe today.
+  auto_stop_machines = 'off'
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
+
+  [[http_service.checks]]
+    interval = '15s'
+    timeout = '5s'
+    grace_period = '20s'
+    method = 'GET'
+    path = '/api/health'
 
 [mounts]
   source = 'playdex_data'
   destination = '/data'
 
 [[vm]]
-  memory = '1gb'
+  memory = '2gb'
   cpu_kind = 'shared'
-  cpus = 1
-  memory_mb = 1024
+  cpus = 2
+  memory_mb = 2048

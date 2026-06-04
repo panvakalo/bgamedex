@@ -5,10 +5,21 @@ interface SseEvent {
   data: Record<string, unknown>
 }
 
+// Cap concurrent SSE connections per user so a handful of open tabs / leaked
+// connections can't exhaust sockets and memory on a single small VM.
+const MAX_CONNECTIONS_PER_USER = 5
+
 const clients = new Map<number, Response[]>()
 
 export function addClient(userId: number, res: Response): void {
   const existing = clients.get(userId) ?? []
+
+  // Evict oldest connections until we're under the cap (after adding the new one).
+  while (existing.length >= MAX_CONNECTIONS_PER_USER) {
+    const oldest = existing.shift()
+    oldest?.end()
+  }
+
   existing.push(res)
   clients.set(userId, existing)
 
